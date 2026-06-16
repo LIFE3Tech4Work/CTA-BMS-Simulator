@@ -1,0 +1,223 @@
+/* AppChrome.jsx — SymmetrE Station outer frame/shell
+ * Title bar, menu bar, toolbar, content area, and status bar.
+ * No import/export — exposes window.SymmetreAppChrome
+ * Reads from: window.AuthContext, window.SimulationContext
+ */
+
+const SymmetreAppChrome = (function() {
+  const { useContext, useState, useCallback } = React;
+
+  // ─── Menu Bar Items ─────────────────────────────────────────────────────────
+  const MENU_ITEMS = ['Station', 'Edit', 'View', 'Action', 'Configure', 'Help', 'Sign Off'];
+
+  // ─── Toolbar Buttons ────────────────────────────────────────────────────────
+  const TOOLBAR_BUTTONS = [
+    { id: 'back', label: 'Back', icon: '◀' },
+    { id: 'forward', label: 'Forward', icon: '▶' },
+    { id: 'reload', label: 'Reload', icon: '⟳' },
+    { id: 'home', label: 'Home', icon: '⌂' },
+    { id: 'sysmenu', label: 'System Menu', icon: '☰' },
+    { id: 'alarms', label: 'Alarms', icon: '🔔' },
+    { id: 'events', label: 'Events', icon: '📋' },
+  ];
+
+  // ─── Title Bar Decorations (cosmetic only) ──────────────────────────────────
+  function TitleBarDecorations() {
+    return React.createElement('div', { className: 'flex items-center gap-1' },
+      React.createElement('button', {
+        className: 'w-4 h-4 rounded-sm bg-gray-500 hover:bg-gray-400 text-[10px] text-center leading-4 cursor-default',
+        'aria-label': 'Minimize',
+        title: 'Minimize'
+      }, '−'),
+      React.createElement('button', {
+        className: 'w-4 h-4 rounded-sm bg-gray-500 hover:bg-gray-400 text-[10px] text-center leading-4 cursor-default',
+        'aria-label': 'Maximize',
+        title: 'Maximize'
+      }, '□'),
+      React.createElement('button', {
+        className: 'w-4 h-4 rounded-sm bg-red-700 hover:bg-red-600 text-[10px] text-center leading-4 cursor-default',
+        'aria-label': 'Close',
+        title: 'Close'
+      }, '×')
+    );
+  }
+
+  // ─── Title Bar ──────────────────────────────────────────────────────────────
+  function TitleBar({ operatorName }) {
+    const title = 'SymmetrE R410.2 — Station [' + (operatorName || 'operator') + ']';
+
+    return React.createElement('div', {
+      className: 'flex items-center justify-between px-3 py-1 bg-gradient-to-r from-blue-900 to-blue-800 border-b border-gray-700 select-none'
+    },
+      React.createElement('div', { className: 'flex items-center gap-2' },
+        React.createElement('span', { className: 'text-xs text-blue-200' }, '🖥'),
+        React.createElement('span', { className: 'text-xs font-semibold text-white tracking-wide' }, title)
+      ),
+      React.createElement(TitleBarDecorations, null)
+    );
+  }
+
+  // ─── Menu Bar ───────────────────────────────────────────────────────────────
+  function MenuBar() {
+    const [activeMenu, setActiveMenu] = useState(null);
+    const auth = useContext(window.AuthContext);
+
+    // Menu items with their dropdown options
+    const MENU_DROPDOWNS = {
+      'Station': [
+        { label: 'AHU-4-4 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4'; } },
+        { label: 'AHU-4-6 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-6'; } },
+        { label: 'Schedule Manager', action: function() { window.location.hash = '#/schedule'; } },
+      ],
+      'View': [
+        { label: 'Alarm Summary', action: function() { window.location.hash = '#/alarms'; } },
+        { label: 'Point Attribute Report', action: function() { window.location.hash = '#/reports'; } },
+        { label: 'Instructor Dashboard', action: function() { window.location.hash = '#/instructor'; } },
+      ],
+      'Action': [
+        { label: 'Start Simulation', action: function() { if (window.SimulationEngine) window.SimulationEngine.start(); } },
+        { label: 'Pause Simulation', action: function() { if (window.SimulationEngine) window.SimulationEngine.pause(); } },
+        { label: 'Speed: 1×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('1x'); } },
+        { label: 'Speed: 60×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('60x'); } },
+        { label: 'Speed: 3600×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('3600x'); } },
+      ],
+      'Help': [
+        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nFour Seasons Hotel NYC Downtown'); } },
+      ],
+    };
+
+    const handleMenuClick = useCallback(function(item) {
+      if (item === 'Sign Off') {
+        // Clear auth state and navigate to auth screen
+        if (window.setAuthState) {
+          window.setAuthState({
+            authenticated: false,
+            operator: '',
+            securityLevel: 'ViewOnly'
+          });
+        }
+        window.location.hash = '#/auth';
+        return;
+      }
+      // Toggle dropdown for other items
+      setActiveMenu(function(prev) { return prev === item ? null : item; });
+    }, []);
+
+    // Close menu when clicking elsewhere
+    useEffect(function() {
+      if (!activeMenu) return;
+      function handleClick() { setActiveMenu(null); }
+      document.addEventListener('click', handleClick);
+      return function() { document.removeEventListener('click', handleClick); };
+    }, [activeMenu]);
+
+    return React.createElement('div', {
+      className: 'flex items-center bg-gray-700 border-b border-gray-600 px-1'
+    },
+      MENU_ITEMS.map(function(item) {
+        const isActive = activeMenu === item;
+        const isSignOff = item === 'Sign Off';
+        const dropdownItems = MENU_DROPDOWNS[item] || null;
+
+        return React.createElement('div', {
+          key: item,
+          className: 'relative'
+        },
+          React.createElement('button', {
+            className: 'px-3 py-1 text-xs text-gray-200 hover:bg-gray-600 hover:text-white transition-colors ' +
+              (isActive ? 'bg-gray-600 text-white ' : '') +
+              (isSignOff ? 'text-red-300 hover:text-red-200' : ''),
+            onClick: function(e) { e.stopPropagation(); handleMenuClick(item); },
+            'aria-label': item,
+            'aria-haspopup': dropdownItems ? 'true' : undefined,
+            'aria-expanded': isActive ? 'true' : undefined
+          }, item),
+          // Dropdown menu
+          isActive && !isSignOff && dropdownItems ? React.createElement('div', {
+            className: 'absolute top-full left-0 z-50 bg-gray-800 border border-gray-600 rounded shadow-lg min-w-[180px] py-1'
+          },
+            dropdownItems.map(function(opt, idx) {
+              return React.createElement('button', {
+                key: idx,
+                className: 'block w-full text-left px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-600 hover:text-white transition-colors',
+                onClick: function() { opt.action(); setActiveMenu(null); }
+              }, opt.label);
+            })
+          ) : null,
+          // Placeholder for items without dropdowns (Edit, Configure)
+          isActive && !isSignOff && !dropdownItems ? React.createElement('div', {
+            className: 'absolute top-full left-0 z-50 bg-gray-800 border border-gray-600 rounded shadow-lg min-w-[140px] py-1'
+          },
+            React.createElement('div', { className: 'px-3 py-1 text-xs text-gray-400 italic' }, 'No actions available')
+          ) : null
+        );
+      })
+    );
+  }
+
+  // ─── Toolbar ────────────────────────────────────────────────────────────────
+  function Toolbar() {
+    const handleToolbarClick = useCallback(function(id) {
+      if (id === 'alarms') {
+        window.location.hash = '#/alarms';
+      }
+      // Other toolbar buttons are placeholder for now
+    }, []);
+
+    return React.createElement('div', {
+      className: 'flex items-center gap-1 px-2 py-1 bg-gray-750 border-b border-gray-600',
+      style: { backgroundColor: '#3a3a3a' }
+    },
+      // Navigation toolbar buttons
+      TOOLBAR_BUTTONS.map(function(btn) {
+        return React.createElement('button', {
+          key: btn.id,
+          className: 'flex-shrink-0 flex items-center justify-center w-7 h-7 rounded border border-gray-600 bg-gray-700 hover:bg-gray-600 hover:border-gray-500 text-sm text-gray-300 hover:text-white transition-colors',
+          onClick: function() { handleToolbarClick(btn.id); },
+          title: btn.label,
+          'aria-label': btn.label
+        }, btn.icon);
+      }),
+      // Spacer to push mode selector to the right
+      React.createElement('div', { className: 'flex-1 min-w-0' }),
+      // Mode Selector (Companion / Explore / Capstone)
+      window.ModeSelector
+        ? React.createElement('div', { className: 'flex-shrink-0' },
+            React.createElement(window.ModeSelector, null)
+          )
+        : null
+    );
+  }
+
+  // ─── Main AppChrome Component ───────────────────────────────────────────────
+  function AppChrome({ children }) {
+    const auth = useContext(window.AuthContext);
+    const operatorName = auth.operator || 'operator';
+
+    return React.createElement('div', {
+      className: 'flex flex-col h-full w-full overflow-hidden bg-gray-900'
+    },
+      // Title Bar
+      React.createElement(TitleBar, { operatorName: operatorName }),
+      // Menu Bar
+      React.createElement(MenuBar, null),
+      // Toolbar
+      React.createElement(Toolbar, null),
+      // Content Area (renders children)
+      React.createElement('div', {
+        className: 'flex-1 overflow-hidden relative'
+      }, children),
+      // Status Bar (BottomStatusBar component, rendered separately)
+      window.BottomStatusBar
+        ? React.createElement(window.BottomStatusBar, null)
+        : React.createElement('div', {
+            className: 'h-6 bg-gray-800 border-t border-gray-700 px-3 flex items-center text-xs text-gray-400'
+          }, 'Status bar loading...')
+    );
+  }
+
+  return AppChrome;
+})();
+
+// Expose globally
+window.SymmetreAppChrome = SymmetreAppChrome;
