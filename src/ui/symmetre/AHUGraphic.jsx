@@ -114,14 +114,21 @@ const AHUGraphic = (() => {
     const pointType = POINT_TYPES[address] || 'AI';
     const badgeColor = BADGE_COLORS[pointType];
 
+    // Navigate to EBI Point Detail on click
+    const handleClick = useCallback(() => {
+      window.location.hash = '#/ebi/' + address + '/general';
+    }, [address]);
+
     return React.createElement('div', {
-      className: 'relative inline-flex items-center gap-1 cursor-default ' + (className || ''),
+      className: 'relative inline-flex items-center gap-1 cursor-pointer ' + (className || ''),
       onMouseEnter: handleMouseEnter,
       onMouseLeave: handleMouseLeave,
+      onClick: handleClick,
+      title: 'Click to view point detail — ' + address,
     },
       // Value display
       React.createElement('span', {
-        className: 'text-xs font-mono text-white bg-black/60 px-1 py-0.5 rounded border border-gray-600',
+        className: 'text-xs font-mono text-white bg-black/60 px-1 py-0.5 rounded border border-gray-600 hover:border-cyan-400 hover:bg-gray-700/80 transition-colors',
       }, formattedValue + ' ' + units),
       // Point type badge (on hover)
       showBadge && React.createElement('span', {
