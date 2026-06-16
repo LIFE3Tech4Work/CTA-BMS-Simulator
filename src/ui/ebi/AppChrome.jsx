@@ -20,14 +20,14 @@ const EBIAppChrome = (function() {
   ];
 
   // System name for breadcrumb (top-level facility)
-  const SYSTEM_NAME = 'Four Seasons NYC';
+  const SYSTEM_NAME = 'CTA Building NYC';
 
   // ─── Breadcrumb Derivation ──────────────────────────────────────────────────
 
   /**
    * Derives breadcrumb path from point metadata.
    * Format: System > Subsystem > Point Name
-   * e.g. "Four Seasons NYC > AHU-4-4 > AHU-4-4 Supply Air Temp"
+   * e.g. "CTA Building NYC > AHU-4-4 > AHU-4-4 Supply Air Temp"
    */
   function deriveBreadcrumb(pointId) {
     if (!pointId || !window.PointRegistry) {

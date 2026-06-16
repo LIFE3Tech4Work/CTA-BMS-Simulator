@@ -23,7 +23,7 @@ const OverrideIndicator = (function() {
       className: [
         'inline-flex items-center',
         'px-2 py-0.5 rounded text-xs font-semibold',
-        'bg-amber-500 text-white'
+        'bg-purple-600 text-white'
       ].join(' '),
       'aria-label': 'Manual Override active'
     }, 'Manual');

@@ -166,13 +166,14 @@ const ControlsSidebar = (() => {
     const isOperatorEditable = (pointType === 'AO' || pointType === 'BO') &&
       hasPrivilege(auth.securityLevel || 'ViewOnly', 'Oper');
 
-    // Determine box color class per Property 4:
-    //   Blue box (bg-blue-200 text-blue-900): Manual Override state
-    //   White box (bg-white text-black): operator-editable (AO/BO at Oper+)
-    //   Grey box (bg-gray-300 text-gray-700): read-only (AI/BI or insufficient security)
-    let boxClass = 'bg-gray-300 text-gray-700'; // Grey = read-only default
+    // Determine box color class per Lev's feedback (June 2026):
+    //   Purple/reddish-purple box: Manual Override state
+    //   Black text on white bg: Normal operator-editable (AO/BO at Oper+)
+    //   Dark/black: Normal read-only values (AI/BI)
+    //   Gray box: Point offline, communication lost, or unavailable
+    let boxClass = 'bg-gray-900 text-white border border-gray-600'; // Black/dark = normal read-only
     if (isManualOverride) {
-      boxClass = 'bg-blue-200 text-blue-900'; // Blue = manual override
+      boxClass = 'bg-purple-200 text-purple-900 border border-purple-400'; // Purple = manual override
     } else if (isOperatorEditable) {
       boxClass = 'bg-white text-black border border-gray-300'; // White = editable
     }

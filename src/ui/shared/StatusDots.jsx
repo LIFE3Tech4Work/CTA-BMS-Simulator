@@ -15,7 +15,7 @@ const StatusDots = (function() {
   var DOT_CONFIG = [
     { key: 'alarm', label: 'Alarm', activeColor: 'bg-red-500', activeBorder: 'border-red-500' },
     { key: 'fault', label: 'Fault', activeColor: 'bg-amber-500', activeBorder: 'border-amber-500' },
-    { key: 'overridden', label: 'Overridden', activeColor: 'bg-amber-500', activeBorder: 'border-amber-500' },
+    { key: 'overridden', label: 'Overridden', activeColor: 'bg-purple-500', activeBorder: 'border-purple-500' },
     { key: 'outOfService', label: 'Out-of-Service', activeColor: 'bg-gray-500', activeBorder: 'border-gray-500' }
   ];
 

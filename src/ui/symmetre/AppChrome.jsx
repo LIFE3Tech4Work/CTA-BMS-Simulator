@@ -82,7 +82,7 @@ const SymmetreAppChrome = (function() {
         { label: 'Speed: 3600×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('3600x'); } },
       ],
       'Help': [
-        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nFour Seasons Hotel NYC Downtown'); } },
+        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nCTA Training Building — NYC Downtown'); } },
       ],
     };
 

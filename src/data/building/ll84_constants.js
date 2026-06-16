@@ -21,7 +21,7 @@ export const LL84 = {
   grossFloorArea_sqft: 715320,
 
   // --- Building metadata ---
-  propertyName: 'Four Seasons Hotel NYC Downtown',
+  propertyName: 'CTA Training Building NYC Downtown',
   propertyId: 6046134,
   address: '27 Barclay St, New York, NY 10007',
   bbl: '1-00123-7502',

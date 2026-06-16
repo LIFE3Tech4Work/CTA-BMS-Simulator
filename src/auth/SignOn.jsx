@@ -97,7 +97,7 @@
               }, 'Enterprise Buildings Integrator'),
               React.createElement('p', {
                 className: 'text-gray-500 text-xs mt-1'
-              }, 'Four Seasons Hotel NYC Downtown')
+              }, 'CTA Training Building — NYC Downtown')
             ),
 
             // Login form

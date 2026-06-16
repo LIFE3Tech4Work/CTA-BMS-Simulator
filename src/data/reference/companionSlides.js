@@ -17,7 +17,7 @@ export const CompanionSlides = [
   {
     slide: 1,
     title: "Welcome to CTA BMS Training",
-    prompt: "Welcome to the CTA Building Management Systems training simulator. This companion guide will walk you through the Honeywell SymmetrE and EBI interfaces used at the Four Seasons Hotel NYC Downtown. Use the arrow buttons to advance through the slides.",
+    prompt: "Welcome to the CTA Building Management Systems training simulator. This companion guide will walk you through the Honeywell SymmetrE and EBI interfaces used at a NYC commercial building. Use the arrow buttons to advance through the slides.",
     scenario: null
   },
   {
@@ -221,7 +221,7 @@ export const CompanionSlides = [
   {
     slide: 35,
     title: "LL97 Accumulator Panel",
-    prompt: "The LL97 panel tracks cumulative annual energy (kBTU), electric (kWh), steam (kBTU), and GHG emissions (mtCO₂e). These values increment each simulation hour based on the Four Seasons LL84 benchmarks.",
+    prompt: "The LL97 panel tracks cumulative annual energy (kBTU), electric (kWh), steam (kBTU), and GHG emissions (mtCO₂e). These values increment each simulation hour based on the building's LL84 benchmarks.",
     scenario: "normal_operation"
   },
   {
@@ -233,7 +233,7 @@ export const CompanionSlides = [
   {
     slide: 37,
     title: "Peer Benchmarking",
-    prompt: "Compare the Four Seasons' carbon intensity against peer buildings. LL97 sets annual limits by building type. Exceeding these limits results in significant financial penalties for the building owner.",
+    prompt: "Compare the building's carbon intensity against peer buildings. LL97 sets annual limits by building type. Exceeding these limits results in significant financial penalties for the building owner.",
     scenario: "normal_operation"
   },
   {

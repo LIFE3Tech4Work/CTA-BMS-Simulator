@@ -12,7 +12,7 @@ const EBIPointSidebar = (function() {
   // ─── Constants ──────────────────────────────────────────────────────────────
   const BAR_FILL_COLOR = '#00BFFF'; // Cyan
   const BAR_BG_COLOR = '#000000';   // Black
-  const AMBER_COLOR = '#FFBF00';
+  const AMBER_COLOR = '#9333EA';    // Purple for manual override (per Lev's feedback)
   const RED_COLOR = '#FF0000';
   const GRAY_COLOR = '#9CA3AF';     // Tailwind gray-400
   const HOLLOW_GRAY = '#6B7280';    // Tailwind gray-500
@@ -65,6 +65,13 @@ const EBIPointSidebar = (function() {
     const radius = 5;
     const cx = size / 2;
     const cy = size / 2;
+    const PURPLE_COLOR = '#9333EA';
+
+    // Use purple for Overridden dot
+    var fillColor = activeColor;
+    if (label === 'Ovrd' && active) {
+      fillColor = PURPLE_COLOR;
+    }
 
     return React.createElement('div', {
       className: 'flex flex-col items-center gap-1',
@@ -81,8 +88,8 @@ const EBIPointSidebar = (function() {
               cx: cx,
               cy: cy,
               r: radius,
-              fill: activeColor,
-              stroke: activeColor,
+              fill: fillColor,
+              stroke: fillColor,
               strokeWidth: 1
             })
           // Hollow gray circle when inactive
@@ -150,6 +157,7 @@ const EBIPointSidebar = (function() {
   // ─── Mode Indicator ────────────────────────────────────────────────────────
   function ModeIndicator({ mode }) {
     const isManual = mode === 'Manual';
+    const PURPLE_COLOR = '#9333EA'; // Purple for manual override
 
     return React.createElement('div', {
       className: 'text-center',
@@ -157,9 +165,9 @@ const EBIPointSidebar = (function() {
     },
       React.createElement('span', {
         className: isManual
-          ? 'inline-block px-3 py-1 text-sm font-semibold text-black rounded'
+          ? 'inline-block px-3 py-1 text-sm font-semibold text-white rounded'
           : 'inline-block px-3 py-1 text-sm text-gray-300',
-        style: isManual ? { backgroundColor: AMBER_COLOR } : {}
+        style: isManual ? { backgroundColor: PURPLE_COLOR } : {}
       }, isManual ? 'Manual' : 'Auto')
     );
   }
