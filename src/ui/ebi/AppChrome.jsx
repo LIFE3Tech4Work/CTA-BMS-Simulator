@@ -12,11 +12,9 @@ const EBIAppChrome = (function() {
 
   const EBI_TABS = [
     { id: 'general', label: 'General' },
-    { id: 'command-priorities', label: 'Command Priorities' },
     { id: 'alarms', label: 'Alarms' },
     { id: 'history', label: 'History' },
     { id: 'recent-events', label: 'Recent Events' },
-    { id: 'advanced', label: 'Advanced' },
   ];
 
   // System name for breadcrumb (top-level facility)
@@ -175,11 +173,6 @@ const EBIAppChrome = (function() {
             return React.createElement(window.EBIGeneralTab, { pointId: pointId });
           }
           break;
-        case 'command-priorities':
-          // Placeholder — no dedicated component yet
-          return React.createElement('div', {
-            className: 'flex items-center justify-center h-full text-gray-400'
-          }, 'Command Priorities — not yet implemented');
         case 'alarms':
           if (window.EBIAlarmsTab) {
             return React.createElement(window.EBIAlarmsTab, { pointId: pointId });
@@ -195,11 +188,6 @@ const EBIAppChrome = (function() {
             return React.createElement(window.EBIRecentEventsTab, { pointId: pointId });
           }
           break;
-        case 'advanced':
-          // Placeholder — no dedicated component yet
-          return React.createElement('div', {
-            className: 'flex items-center justify-center h-full text-gray-400'
-          }, 'Advanced — not yet implemented');
         default:
           break;
       }
