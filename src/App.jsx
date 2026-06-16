@@ -53,7 +53,7 @@ function parseRoute(hash) {
     return { screen: 'symmetre', params: { ahuId: parts[1] || 'AHU-4-4' } };
   }
   if (parts[0] === 'ebi') {
-    return { screen: 'ebi', params: { pointId: parts[1], tab: parts[2] || 'general' } };
+    return { screen: 'ebi', params: { pointId: decodeURIComponent(parts[1] || ''), tab: parts[2] || 'general' } };
   }
   if (parts[0] === 'alarms') {
     return { screen: 'alarms', params: {} };
