@@ -1,5 +1,6 @@
 ---
 inclusion: auto
+description: Honeywell SymmetrE/EBI interface conventions and BMS color coding standards for the simulator
 ---
 
 # Honeywell SymmetrE/EBI R410 Reference
