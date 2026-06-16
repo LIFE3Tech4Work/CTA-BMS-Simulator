@@ -41,6 +41,18 @@ const AHUGraphic = (() => {
     }
   };
 
+  // Zone/room descriptions for each AHU
+  const ZONE_INFO = {
+    'AHU-4-4': {
+      serves: 'Hotel Guest Rooms — Floors 4–12',
+      zoneLabel: 'GUEST ROOMS',
+    },
+    'AHU-4-6': {
+      serves: 'Meeting Rooms & Conference — Level 4',
+      zoneLabel: 'MEETING ROOMS',
+    }
+  };
+
   // Point type metadata (for badge display)
   const POINT_TYPES = {
     'AO104@DEV4004': 'AO', 'AO103@DEV4004': 'AO', 'AO102@DEV4004': 'AO',
@@ -185,6 +197,7 @@ const AHUGraphic = (() => {
   function AHUGraphicComponent({ ahuId }) {
     const effectiveAhuId = ahuId || 'AHU-4-4';
     const pointAddresses = POINT_MAP[effectiveAhuId] || POINT_MAP['AHU-4-4'];
+    const zoneInfo = ZONE_INFO[effectiveAhuId] || ZONE_INFO['AHU-4-4'];
 
     // Track binary states for fan and damper
     const [fanRunning, setFanRunning] = useState(false);
@@ -223,8 +236,13 @@ const AHUGraphic = (() => {
       'data-testid': 'ahu-graphic',
     },
       // Title
-      React.createElement('div', { className: 'absolute top-2 left-4 text-sm font-semibold text-gray-300' },
-        effectiveAhuId + ' — Air Handling Unit Schematic'
+      React.createElement('div', { className: 'absolute top-2 left-4' },
+        React.createElement('div', { className: 'text-sm font-semibold text-gray-300' },
+          effectiveAhuId + ' — Air Handling Unit Schematic'
+        ),
+        React.createElement('div', { className: 'text-[11px] text-cyan-400 mt-0.5' },
+          'Serves: ' + zoneInfo.serves
+        )
       ),
 
       // Main schematic layout - horizontal airflow path
@@ -355,7 +373,7 @@ const AHUGraphic = (() => {
             React.createElement('div', {
               className: 'border border-gray-500 rounded bg-gray-700/30 px-2 py-1 flex flex-col items-center',
             },
-              React.createElement('span', { className: 'text-[9px] text-gray-300 mb-0.5' }, 'ZONE'),
+              React.createElement('span', { className: 'text-[9px] text-gray-300 font-semibold mb-0.5' }, zoneInfo.zoneLabel),
               React.createElement(PointValue, {
                 address: pointAddresses.raTemp,
                 label: 'Zone/RA Temp',
