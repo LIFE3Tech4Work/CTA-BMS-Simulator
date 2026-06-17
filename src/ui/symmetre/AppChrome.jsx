@@ -8,7 +8,7 @@ const SymmetreAppChrome = (function() {
   const { useContext, useState, useCallback } = React;
 
   // ─── Menu Bar Items ─────────────────────────────────────────────────────────
-  const MENU_ITEMS = ['Station', 'Edit', 'View', 'Action', 'Configure', 'Help', 'Sign Off'];
+  const MENU_ITEMS = ['Station', 'View', 'Action', 'Help', 'Sign Off'];
 
   // ─── Toolbar Buttons ────────────────────────────────────────────────────────
   const TOOLBAR_BUTTONS = [
