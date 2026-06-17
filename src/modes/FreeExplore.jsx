@@ -270,41 +270,11 @@
 
       // ─── Main Content Slot ────────────────────────────────────────────────
       // This area is where the full-width BMS interface renders.
-      // FreeExplore wraps the main BMS content without a side panel.
       React.createElement('div', {
-        className: 'flex-1 overflow-hidden relative',
+        className: 'flex-1 overflow-auto relative',
         'data-testid': 'free-explore-content'
       },
-        // Render BMS content passed as prop
-        bmsContent ? bmsContent : (
-          // Fallback if no BMS content provided
-          !scenarios.length && React.createElement('div', {
-            className: 'flex items-center justify-center h-full text-gray-500'
-          },
-            React.createElement('div', { className: 'text-center' },
-              React.createElement('p', { className: 'text-lg' }, '🔍 Free Explore Mode'),
-              React.createElement('p', { className: 'text-sm mt-2' },
-                'No scenarios loaded. Ensure window.SCENARIOS is populated.')
-            )
-          )
-        )
-      ),
-
-      // ─── Chapter Index Panel (2-click access from mode selection) ──────────
-      // Always available at the bottom of FreeExplore for quick reference navigation
-      React.createElement('div', {
-        className: 'border-t border-gray-700 bg-gray-900 max-h-[40%] overflow-auto',
-        'data-testid': 'chapter-index-panel'
-      },
-        window.ChapterIndex
-          ? React.createElement(window.ChapterIndex, {
-              compact: false,
-              onNavigate: function (chapter) {
-                // Close scenario selector if open
-                setShowSelector(false);
-              }
-            })
-          : null
+        bmsContent ? bmsContent : null
       )
     );
   }
