@@ -158,10 +158,20 @@ const SymmetreAppChrome = (function() {
       if (id === 'alarms') {
         window.location.hash = '#/alarms';
       } else if (id === 'reload') {
-        // Reset simulation to row 1 (May 1, 2026 00:00)
+        // Full simulation reset: jump to row 1 and reset all Manual points to Auto
         if (window.SimulationEngine) {
           window.SimulationEngine.jumpToDate(window.SimulationEngine.BASE_DATE);
           window.SimulationEngine.pause();
+        }
+        // Reset all points to Auto mode so interpolation resumes from base data
+        if (window.PointRegistry && window.PointRegistry.points) {
+          window.PointRegistry.points.forEach(function(point) {
+            point.mode = 'Auto';
+          });
+          // Trigger one interpolation pass to reset values from data arrays
+          if (window.PointRegistry.interpolate) {
+            window.PointRegistry.interpolate(1, 0);
+          }
         }
       } else if (id === 'back') {
         window.history.back();
