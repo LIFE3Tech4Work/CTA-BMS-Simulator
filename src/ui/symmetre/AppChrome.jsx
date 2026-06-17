@@ -19,26 +19,6 @@ const SymmetreAppChrome = (function() {
   ];
 
   // ─── Title Bar Decorations (cosmetic only) ──────────────────────────────────
-  function TitleBarDecorations() {
-    return React.createElement('div', { className: 'flex items-center gap-1' },
-      React.createElement('button', {
-        className: 'w-4 h-4 rounded-sm bg-gray-500 hover:bg-gray-400 text-[10px] text-center leading-4 cursor-default',
-        'aria-label': 'Minimize',
-        title: 'Minimize'
-      }, '−'),
-      React.createElement('button', {
-        className: 'w-4 h-4 rounded-sm bg-gray-500 hover:bg-gray-400 text-[10px] text-center leading-4 cursor-default',
-        'aria-label': 'Maximize',
-        title: 'Maximize'
-      }, '□'),
-      React.createElement('button', {
-        className: 'w-4 h-4 rounded-sm bg-red-700 hover:bg-red-600 text-[10px] text-center leading-4 cursor-default',
-        'aria-label': 'Close',
-        title: 'Close'
-      }, '×')
-    );
-  }
-
   // ─── Title Bar ──────────────────────────────────────────────────────────────
   function TitleBar({ operatorName }) {
     const title = 'SymmetrE R410.2 — Station [' + (operatorName || 'operator') + ']';
@@ -49,8 +29,7 @@ const SymmetreAppChrome = (function() {
       React.createElement('div', { className: 'flex items-center gap-2' },
         React.createElement('span', { className: 'text-xs text-blue-200' }, '🖥'),
         React.createElement('span', { className: 'text-xs font-semibold text-white tracking-wide' }, title)
-      ),
-      React.createElement(TitleBarDecorations, null)
+      )
     );
   }
 
