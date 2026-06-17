@@ -58,7 +58,7 @@
 
   // ─── FreeExplore Component ──────────────────────────────────────────────────
 
-  function FreeExplore({ bmsContent }) {
+  function FreeExplore() {
     var scenarios = getScenarios();
     var currentSpeed = (window.SimulationEngine && window.SimulationEngine.speed) || '60x';
 
@@ -129,15 +129,13 @@
       }, 4000);
     }, []);
 
-    // ─── Render ───────────────────────────────────────────────────────────────
+    // ─── Render (pure overlay — no layout impact) ─────────────────────────────
 
-    return React.createElement('div', {
-      className: 'flex flex-col h-full w-full',
-      'data-testid': 'free-explore'
-    },
-      // ─── Top Toolbar (fixed height, not floating) ─────────────────────────
+    return React.createElement(React.Fragment, null,
+      // ─── Floating Toolbar ─────────────────────────────────────────────────
       React.createElement('div', {
-        className: 'flex-shrink-0 flex items-center justify-between px-4 py-1 bg-gray-900 border-b border-gray-700 z-40',
+        className: 'absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-1 bg-gray-900/95 border-b border-gray-700',
+        style: { pointerEvents: 'auto' }
       },
         // Left: Mode label + scenario button
         React.createElement('div', { className: 'flex items-center gap-3' },
@@ -266,12 +264,7 @@
             );
           })
         )
-      ),
-
-      // ─── BMS Content (fills remaining space) ──────────────────────────────
-      React.createElement('div', {
-        className: 'flex-1 min-h-0 overflow-auto relative'
-      }, bmsContent)
+      )
     );
   }
 
