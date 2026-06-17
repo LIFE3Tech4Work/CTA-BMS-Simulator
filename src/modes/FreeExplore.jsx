@@ -132,12 +132,16 @@
     // ─── Render ───────────────────────────────────────────────────────────────
 
     return React.createElement('div', {
-      className: 'flex flex-col h-full w-full bg-gray-800',
+      className: 'relative h-full w-full',
       'data-testid': 'free-explore'
     },
-      // ─── Top Toolbar ──────────────────────────────────────────────────────
+      // BMS content fills the full area
+      bmsContent,
+
+      // ─── Floating Top Toolbar (overlays BMS content) ──────────────────────
       React.createElement('div', {
-        className: 'flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700'
+        className: 'absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-2 bg-gray-900/95 border-b border-gray-700',
+        style: { backdropFilter: 'blur(4px)' }
       },
         // Left: Mode label + scenario button
         React.createElement('div', { className: 'flex items-center gap-3' },
@@ -188,8 +192,8 @@
 
       // ─── Confirmation Banner ──────────────────────────────────────────────
       confirmation && React.createElement('div', {
-        className: 'px-4 py-2 bg-green-900 border-b border-green-700 text-green-200 text-sm ' +
-          'flex items-center gap-2 animate-pulse',
+        className: 'absolute top-12 left-0 right-0 z-40 px-4 py-2 bg-green-900/95 border-b border-green-700 text-green-200 text-sm ' +
+          'flex items-center gap-2',
         role: 'status',
         'aria-live': 'polite'
       },
@@ -199,7 +203,7 @@
 
       // ─── Scenario Selector Panel (overlay dropdown) ───────────────────────
       showSelector && React.createElement('div', {
-        className: 'absolute top-14 left-4 right-4 z-50 max-h-96 overflow-auto ' +
+        className: 'absolute top-12 left-4 right-4 z-50 max-h-96 overflow-auto ' +
           'bg-gray-900 border border-gray-600 rounded-lg shadow-2xl',
         role: 'listbox',
         'aria-label': 'Scenario list'
@@ -266,15 +270,6 @@
             );
           })
         )
-      ),
-
-      // ─── Main Content Slot ────────────────────────────────────────────────
-      // This area is where the full-width BMS interface renders.
-      React.createElement('div', {
-        className: 'flex-1 overflow-auto relative',
-        'data-testid': 'free-explore-content'
-      },
-        bmsContent ? bmsContent : null
       )
     );
   }
