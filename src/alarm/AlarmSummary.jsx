@@ -42,7 +42,7 @@
 
     var className = 'w-4 h-4 rounded-full inline-block flex-shrink-0';
     if (style.flashing) {
-      className += ' animate-pulse';
+      className += ' animate-bms-flash';
     }
 
     var inlineStyle = {
@@ -450,35 +450,56 @@
       function refreshAlarms() {
         if (window.FaultEngine && typeof window.FaultEngine.getAllAlarms === 'function') {
           var engineAlarms = window.FaultEngine.getAllAlarms();
-          // Merge engine alarms with preloaded, avoiding duplicates by id
-          var existingIds = new Set(PRELOADED_ALARMS.map(function (a) { return a.id; }));
-          var merged = PRELOADED_ALARMS.slice();
 
-          for (var i = 0; i < engineAlarms.length; i++) {
-            var engineAlarm = engineAlarms[i];
-            if (!existingIds.has(engineAlarm.id)) {
-              // Add subsystem mapping
-              var enriched = Object.assign({}, engineAlarm, {
-                subsystem: engineAlarm.subsystem || getSubsystemForSource(engineAlarm.source)
-              });
-              merged.push(enriched);
-              existingIds.add(engineAlarm.id);
-            } else {
-              // Update existing alarm states from engine
-              for (var j = 0; j < merged.length; j++) {
-                if (merged[j].id === engineAlarm.id) {
-                  merged[j] = Object.assign({}, merged[j], {
-                    lifecycle: engineAlarm.lifecycle,
-                    acknowledged: engineAlarm.acknowledged,
-                    operator: engineAlarm.operator || merged[j].operator,
-                    action: engineAlarm.action || merged[j].action
-                  });
-                  break;
+          setAlarms(function (currentAlarms) {
+            // Build a map of current acknowledged/operator/action states to preserve them
+            var ackMap = {};
+            currentAlarms.forEach(function (a) {
+              if (a.acknowledged) {
+                ackMap[a.id] = { acknowledged: a.acknowledged, operator: a.operator, action: a.action };
+              }
+            });
+
+            // Start from preloaded as base
+            var existingIds = new Set(PRELOADED_ALARMS.map(function (a) { return a.id; }));
+            var merged = PRELOADED_ALARMS.map(function (a) {
+              // Preserve acknowledged state from current alarms
+              if (ackMap[a.id]) {
+                return Object.assign({}, a, ackMap[a.id]);
+              }
+              return Object.assign({}, a);
+            });
+
+            for (var i = 0; i < engineAlarms.length; i++) {
+              var engineAlarm = engineAlarms[i];
+              if (!existingIds.has(engineAlarm.id)) {
+                // Add new alarm from engine
+                var enriched = Object.assign({}, engineAlarm, {
+                  subsystem: engineAlarm.subsystem || getSubsystemForSource(engineAlarm.source)
+                });
+                // Preserve acknowledged state if previously acknowledged
+                if (ackMap[engineAlarm.id]) {
+                  enriched = Object.assign(enriched, ackMap[engineAlarm.id]);
+                }
+                merged.push(enriched);
+                existingIds.add(engineAlarm.id);
+              } else {
+                // Update existing alarm states from engine
+                for (var j = 0; j < merged.length; j++) {
+                  if (merged[j].id === engineAlarm.id) {
+                    merged[j] = Object.assign({}, merged[j], {
+                      lifecycle: engineAlarm.lifecycle,
+                      acknowledged: ackMap[engineAlarm.id] ? true : engineAlarm.acknowledged,
+                      operator: ackMap[engineAlarm.id] ? ackMap[engineAlarm.id].operator : (engineAlarm.operator || merged[j].operator),
+                      action: ackMap[engineAlarm.id] ? ackMap[engineAlarm.id].action : (engineAlarm.action || merged[j].action)
+                    });
+                    break;
+                  }
                 }
               }
             }
-          }
-          setAlarms(merged);
+            return merged;
+          });
         }
       }
 

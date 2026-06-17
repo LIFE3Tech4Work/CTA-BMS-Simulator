@@ -20,6 +20,15 @@
             'bms-cyan': '#00BFFF',
             'bms-amber': '#FFA500',
             'bms-charcoal': '#2d2d2d',
+          },
+          animation: {
+            'bms-flash': 'bms-flash 0.8s ease-in-out infinite',
+          },
+          keyframes: {
+            'bms-flash': {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.15' },
+            }
           }
         }
       }
