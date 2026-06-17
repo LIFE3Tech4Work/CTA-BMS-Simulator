@@ -56,7 +56,8 @@ const ControlsSidebar = (() => {
         title: 'Supply Air Temp Control',
         points: [
           { address: `AO106@${prefix}`, label: 'SAT Setpoint' },
-          { address: `AI301@${prefix}`, label: 'SAT Actual' }
+          { address: `AI301@${prefix}`, label: 'SAT Actual' },
+          { address: `AO102@${prefix}`, label: 'CHW Coil Valve' }
         ]
       },
       {
