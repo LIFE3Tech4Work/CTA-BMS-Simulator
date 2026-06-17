@@ -58,7 +58,7 @@
 
   // ─── FreeExplore Component ──────────────────────────────────────────────────
 
-  function FreeExplore() {
+  function FreeExplore({ bmsContent }) {
     var scenarios = getScenarios();
     var currentSpeed = (window.SimulationEngine && window.SimulationEngine.speed) || '60x';
 
@@ -275,14 +275,17 @@
         className: 'flex-1 overflow-hidden relative',
         'data-testid': 'free-explore-content'
       },
-        // If no scenarios loaded, show chapter index + placeholder
-        !scenarios.length && React.createElement('div', {
-          className: 'flex items-center justify-center h-full text-gray-500'
-        },
-          React.createElement('div', { className: 'text-center' },
-            React.createElement('p', { className: 'text-lg' }, '🔍 Free Explore Mode'),
-            React.createElement('p', { className: 'text-sm mt-2' },
-              'No scenarios loaded. Ensure window.SCENARIOS is populated.')
+        // Render BMS content passed as prop
+        bmsContent ? bmsContent : (
+          // Fallback if no BMS content provided
+          !scenarios.length && React.createElement('div', {
+            className: 'flex items-center justify-center h-full text-gray-500'
+          },
+            React.createElement('div', { className: 'text-center' },
+              React.createElement('p', { className: 'text-lg' }, '🔍 Free Explore Mode'),
+              React.createElement('p', { className: 'text-sm mt-2' },
+                'No scenarios loaded. Ensure window.SCENARIOS is populated.')
+            )
           )
         )
       ),

@@ -148,6 +148,11 @@ function SymmetreScreen({ params }) {
     panelContent = React.createElement(window.CapstoneModeShell, null);
   }
 
+  // In freeExplore mode, wrap BMS content with FreeExplore overlay (scenario toolbar)
+  if (currentMode === 'freeExplore' && window.FreeExplore) {
+    return React.createElement(window.FreeExplore, { bmsContent: bmsContent });
+  }
+
   // Wrap with ModeLayoutWrapper when a side panel is active
   if (panelContent && window.ModeLayoutWrapper) {
     return React.createElement(window.ModeLayoutWrapper, {
