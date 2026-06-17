@@ -118,12 +118,14 @@ function SymmetreScreen({ params }) {
           ),
           // AHU Graphic area
           React.createElement('div', { className: 'flex-1 relative flex items-center justify-center text-white' },
-            window.AHUGraphic
-              ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4' })
-              : React.createElement('div', { className: 'text-center' },
-                  React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
-                  React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
-                ),
+            window.AHUGraphicSVG
+              ? React.createElement(window.AHUGraphicSVG, { ahuId: params.ahuId || 'AHU-4-4' })
+              : (window.AHUGraphic
+                ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4' })
+                : React.createElement('div', { className: 'text-center' },
+                    React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
+                    React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
+                  )),
             window.SimultaneousHeatCool
               ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4' })
               : null
