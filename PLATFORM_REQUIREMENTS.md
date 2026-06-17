@@ -421,6 +421,7 @@ BACnet address (format: [type][instance]@DEV[device]), name, type (AI/AO/BI/BO),
 | 12 | VFD Modulation (Healthy) | 260 | Fan speed 40–70% normal |
 | 13 | Peak Cooling Load | 750 | Max summer, CHW near 100% |
 | 14 | Transition Season | 100 | Mild conditions, economizer swings |
+| 15 | AHU-4-6 Normal Cooling (No Fault) | 300 | PHT closed, CHW at 60% — no simultaneous heat/cool |
 
 ---
 

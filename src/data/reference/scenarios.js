@@ -148,6 +148,16 @@ export const Scenarios = [
       "AO_CHW_44@DEV4004": 20,
       "AO_PHT_44@DEV4004": 10
     }
+  },
+  {
+    id: 15,
+    name: "AHU-4-6 Normal Cooling (No Fault)",
+    description: "AHU-4-6 operating in normal cooling mode with preheat valve closed. Demonstrates correct changeover logic where PHT closes before CHW opens — no simultaneous heating and cooling.",
+    startRow: 300,
+    pointOverrides: {
+      "AO103@DEV4006": 0,
+      "AO102@DEV4006": 60
+    }
   }
 ];
 
