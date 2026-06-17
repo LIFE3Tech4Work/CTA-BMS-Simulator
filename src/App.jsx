@@ -91,7 +91,7 @@ function AuthScreen() {
 
 function SymmetreScreen({ params }) {
   var modeCtx = useContext(ModeContext);
-  var currentMode = (modeCtx && modeCtx.currentMode) || 'freeExplore';
+  var currentMode = (modeCtx && modeCtx.currentMode) || 'companion';
 
   // Build the core BMS content
   var bmsContent = null;
@@ -146,14 +146,6 @@ function SymmetreScreen({ params }) {
     panelContent = React.createElement(window.CompanionMode, null);
   } else if (currentMode === 'capstone' && window.CapstoneModeShell) {
     panelContent = React.createElement(window.CapstoneModeShell, null);
-  }
-
-  // In freeExplore mode, wrap BMS content with FreeExplore overlay (scenario toolbar)
-  if (currentMode === 'freeExplore' && window.FreeExplore) {
-    return React.createElement('div', { className: 'relative h-full w-full' },
-      bmsContent,
-      React.createElement(window.FreeExplore, null)
-    );
   }
 
   // Wrap with ModeLayoutWrapper when a side panel is active

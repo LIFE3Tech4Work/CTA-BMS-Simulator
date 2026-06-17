@@ -3,6 +3,8 @@
  *
  * Displays a structured 5-section worksheet for capstone assessment.
  * Features:
+ * - Scenario selector with 15 scenarios (integrated from former Explore mode)
+ * - Speed controls (Pause, 1x, 60x, 3600x)
  * - 5 sections each with title, prompt, and text input (max 2000 chars)
  * - Section navigation sidebar showing completion status
  * - Auto-save to localStorage within 2 seconds of last keystroke (debounced)
@@ -28,6 +30,14 @@
 
   var AUTOSAVE_DELAY_MS = 2000;
   var TOTAL_SECTIONS = 5;
+
+  /** Speed options for the simulation clock */
+  var SPEED_OPTIONS = [
+    { value: 'pause', label: 'Pause', icon: '⏸' },
+    { value: '1x', label: '1×', icon: '▶' },
+    { value: '60x', label: '60×', icon: '⏩' },
+    { value: '3600x', label: '3600×', icon: '⏭' }
+  ];
 
   // ─── Helper: localStorage key ───────────────────────────────────────────────
 
@@ -104,6 +114,163 @@
       console.warn('[CapstoneModeShell] Failed to save:', e);
       return false;
     }
+  }
+
+  // ─── Helper: Load a scenario (jump to date + apply overrides) ─────────────
+
+  function loadScenario(scenario) {
+    if (!scenario) return;
+    // Jump to start row
+    if (window.SimulationEngine && scenario.startRow) {
+      var baseDate = window.SimulationEngine.BASE_DATE;
+      var targetDate = new Date(baseDate.getTime() + (scenario.startRow - 1) * 3600000);
+      window.SimulationEngine.jumpToDate(targetDate);
+    }
+    // Apply point overrides
+    if (window.PointRegistry && scenario.pointOverrides) {
+      var keys = Object.keys(scenario.pointOverrides);
+      for (var i = 0; i < keys.length; i++) {
+        window.PointRegistry.setValue(keys[i], scenario.pointOverrides[keys[i]], 'operator');
+      }
+    }
+  }
+
+  // ─── ScenarioSelector Component ─────────────────────────────────────────────
+
+  function ScenarioSelector() {
+    var scenarios = (window.SCENARIOS && Array.isArray(window.SCENARIOS)) ? window.SCENARIOS : [];
+
+    var stateOpen = useState(false);
+    var isOpen = stateOpen[0];
+    var setIsOpen = stateOpen[1];
+
+    var stateActive = useState(null);
+    var activeScenario = stateActive[0];
+    var setActiveScenario = stateActive[1];
+
+    var stateSpeed = useState(
+      (window.SimulationEngine && window.SimulationEngine.speed) || 'pause'
+    );
+    var speed = stateSpeed[0];
+    var setSpeed = stateSpeed[1];
+
+    var stateConfirmation = useState(null);
+    var confirmation = stateConfirmation[0];
+    var setConfirmation = stateConfirmation[1];
+
+    function handleLoadScenario(scenario) {
+      loadScenario(scenario);
+      setActiveScenario(scenario);
+      setIsOpen(false);
+      setConfirmation('Loaded: ' + scenario.name);
+      setTimeout(function () { setConfirmation(null); }, 4000);
+    }
+
+    function handleSpeedChange(newSpeed) {
+      if (window.SimulationEngine) {
+        window.SimulationEngine.setSpeed(newSpeed);
+        setSpeed(newSpeed);
+      }
+    }
+
+    return React.createElement('div', {
+      className: 'border-b border-gray-700 bg-gray-850'
+    },
+      // Scenario selector button + active name
+      React.createElement('div', {
+        className: 'px-3 py-2 flex items-center justify-between'
+      },
+        React.createElement('button', {
+          type: 'button',
+          className: 'px-3 py-1.5 text-xs font-medium rounded bg-gray-700 text-gray-200 ' +
+            'hover:bg-gray-600 hover:text-white border border-gray-600 transition-colors',
+          onClick: function () { setIsOpen(!isOpen); },
+          'aria-expanded': isOpen ? 'true' : 'false',
+          'aria-label': 'Select scenario'
+        }, '📋 Select Scenario'),
+        // Speed controls
+        React.createElement('div', {
+          className: 'flex items-center gap-1',
+          role: 'group',
+          'aria-label': 'Simulation speed controls'
+        },
+          SPEED_OPTIONS.map(function (opt) {
+            var isActive = speed === opt.value;
+            return React.createElement('button', {
+              key: opt.value,
+              type: 'button',
+              className: 'px-1.5 py-1 text-[10px] font-medium rounded transition-colors ' +
+                (isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'),
+              onClick: function () { handleSpeedChange(opt.value); },
+              title: opt.label + ' speed',
+              'aria-pressed': isActive ? 'true' : 'false'
+            }, opt.icon + ' ' + opt.label);
+          })
+        )
+      ),
+
+      // Active scenario display
+      activeScenario && React.createElement('div', {
+        className: 'px-3 pb-2 text-xs text-gray-400'
+      },
+        React.createElement('span', { className: 'text-bms-cyan' }, '● '),
+        'Active: ',
+        React.createElement('span', { className: 'text-gray-200 font-medium' }, activeScenario.name)
+      ),
+
+      // Confirmation banner
+      confirmation && React.createElement('div', {
+        className: 'px-3 pb-2 text-xs text-green-300',
+        role: 'status',
+        'aria-live': 'polite'
+      }, '✓ ' + confirmation),
+
+      // Scenario dropdown list
+      isOpen && React.createElement('div', {
+        className: 'max-h-64 overflow-auto border-t border-gray-700',
+        role: 'listbox',
+        'aria-label': 'Scenario list'
+      },
+        scenarios.length === 0
+          ? React.createElement('div', { className: 'px-3 py-2 text-xs text-gray-500 italic' },
+              'No scenarios available')
+          : scenarios.map(function (scenario) {
+              var isActive = activeScenario && activeScenario.id === scenario.id;
+              return React.createElement('div', {
+                key: scenario.id,
+                className: 'px-3 py-2 cursor-pointer border-b border-gray-800 transition-colors ' +
+                  (isActive
+                    ? 'bg-gray-700 border-l-2 border-l-blue-400'
+                    : 'hover:bg-gray-800 border-l-2 border-l-transparent'),
+                role: 'option',
+                'aria-selected': isActive ? 'true' : 'false',
+                onClick: function () { handleLoadScenario(scenario); },
+                tabIndex: 0,
+                onKeyDown: function (e) {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleLoadScenario(scenario);
+                  }
+                }
+              },
+                React.createElement('div', { className: 'flex items-center gap-2' },
+                  React.createElement('span', {
+                    className: 'inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold ' +
+                      (isActive ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-300')
+                  }, scenario.id),
+                  React.createElement('span', {
+                    className: 'text-xs font-medium ' + (isActive ? 'text-blue-300' : 'text-gray-200')
+                  }, scenario.name)
+                ),
+                scenario.description && React.createElement('p', {
+                  className: 'text-[10px] text-gray-500 mt-0.5 ml-6 line-clamp-1'
+                }, scenario.description)
+              );
+            })
+      )
+    );
   }
 
   // ─── CapstoneModeShell Component ───────────────────────────────────────────
@@ -222,6 +389,9 @@
               : 'bg-gray-700 text-gray-400')
         }, completedCount + '/5 complete')
       ),
+
+      // Scenario selector (integrated from former Explore mode)
+      React.createElement(ScenarioSelector, null),
 
       // Storage warning banner
       storageWarning && React.createElement('div', {

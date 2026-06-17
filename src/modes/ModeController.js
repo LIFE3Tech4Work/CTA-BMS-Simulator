@@ -1,10 +1,9 @@
-/* ModeController.js — Mode management for 3 pedagogical modes
+/* ModeController.js — Mode management for 2 pedagogical modes
  * Manages currentMode state and layout configuration.
  * No import/export — exposes as window.ModeController.
  *
  * Modes:
  *   companion   → mainWidth 70%, panelWidth 30%
- *   freeExplore → mainWidth 100%, panelWidth 0%
  *   capstone    → mainWidth 65%, panelWidth 35%
  *
  * Integration:
@@ -19,13 +18,12 @@
 
   var LAYOUT_CONFIGS = {
     companion: { mainWidth: '70%', panelWidth: '30%' },
-    freeExplore: { mainWidth: '100%', panelWidth: '0%' },
     capstone: { mainWidth: '65%', panelWidth: '35%' }
   };
 
   // ─── Valid Modes ────────────────────────────────────────────────────────────
 
-  var VALID_MODES = ['companion', 'freeExplore', 'capstone'];
+  var VALID_MODES = ['companion', 'capstone'];
 
   // ─── Mode Controller ───────────────────────────────────────────────────────
 
@@ -34,7 +32,7 @@
 
     /**
      * Set the active pedagogical mode.
-     * @param {string} mode - One of: 'companion', 'freeExplore', 'capstone'
+     * @param {string} mode - One of: 'companion', 'capstone'
      * @returns {boolean} true if mode was set, false if invalid mode
      */
     setMode: function(mode) {
@@ -132,7 +130,6 @@
 
     var modes = [
       { id: 'companion', label: 'Companion', icon: '📖', title: 'Companion Mode — Slide-guided training (70%/30% layout)' },
-      { id: 'freeExplore', label: 'Explore', icon: '🔍', title: 'Free Explore Mode — Full-width BMS interface (100% layout)' },
       { id: 'capstone', label: 'Capstone', icon: '📝', title: 'Capstone Mode — Worksheet assessment (65%/35% layout)' }
     ];
 
