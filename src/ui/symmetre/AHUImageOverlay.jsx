@@ -24,51 +24,30 @@ const AHUImageOverlay = (() => {
   // ─── Image paths (served from src/assets/) ──────────────────────────────────
 
   const IMAGE_MAP = {
-    'AHU-4-4': 'assets/AHU_4_4_Hotel.png',
-    'AHU-4-6': 'assets/AHU_4_6_Hotel.png',
+    'AHU-23-1': 'assets/AHU_23_1_Honeywell.png',
   };
 
   // ─── Hotspot definitions ────────────────────────────────────────────────────
   // x, y = top-left corner as % of image width/height
   // w, h = width/height as % of image
-  // These are approximate — adjust after visual inspection
+  // Positions based on the Honeywell SymmetrE AHU-23-1 screenshot
 
   const HOTSPOT_MAP = {
-    'AHU-4-4': [
-      { id: 'oaDamper', address: 'AO104@DEV4004', label: 'OA Damper', units: '%',
-        x: 5.5, y: 55, w: 5.5, h: 5 },
-      { id: 'phtCoilValve', address: 'AO103@DEV4004', label: 'PHT Coil Valve', units: '%',
-        x: 24, y: 55, w: 5.5, h: 5 },
-      { id: 'chwCoilValve', address: 'AO102@DEV4004', label: 'CHW Coil Valve', units: '%',
-        x: 38, y: 55, w: 5.5, h: 5 },
-      { id: 'saFanSpeed', address: 'AO101@DEV4004', label: 'Fan Speed', units: '%',
-        x: 58, y: 42, w: 5.5, h: 5 },
-      { id: 'saTemp', address: 'AI301@DEV4004', label: 'Supply Air Temp', units: '°F',
-        x: 72, y: 32, w: 6, h: 5 },
-      { id: 'raTemp', address: 'AI201@DEV4004', label: 'Return Air Temp', units: '°F',
-        x: 80, y: 60, w: 6, h: 5 },
-      { id: 'raCO2', address: 'AI401@DEV4004', label: 'CO₂', units: 'ppm',
-        x: 80, y: 68, w: 6, h: 5 },
-      { id: 'branchStatic', address: 'AI501@DEV4004', label: 'Static Pressure', units: 'in.W.C.',
-        x: 68, y: 60, w: 7, h: 5 },
-    ],
-    'AHU-4-6': [
-      { id: 'oaDamper', address: 'AO104@DEV4006', label: 'OA Damper', units: '%',
-        x: 5.5, y: 55, w: 5.5, h: 5 },
-      { id: 'phtCoilValve', address: 'AO103@DEV4006', label: 'PHT Coil Valve', units: '%',
-        x: 24, y: 55, w: 5.5, h: 5 },
-      { id: 'chwCoilValve', address: 'AO102@DEV4006', label: 'CHW Coil Valve', units: '%',
-        x: 38, y: 55, w: 5.5, h: 5 },
-      { id: 'saFanSpeed', address: 'AO101@DEV4006', label: 'Fan Speed', units: '%',
-        x: 58, y: 42, w: 5.5, h: 5 },
-      { id: 'saTemp', address: 'AI301@DEV4006', label: 'Supply Air Temp', units: '°F',
-        x: 72, y: 32, w: 6, h: 5 },
-      { id: 'raTemp', address: 'AI201@DEV4006', label: 'Return Air Temp', units: '°F',
-        x: 80, y: 60, w: 6, h: 5 },
-      { id: 'raCO2', address: 'AI401@DEV4006', label: 'CO₂', units: 'ppm',
-        x: 80, y: 68, w: 6, h: 5 },
-      { id: 'branchStatic', address: 'AI501@DEV4006', label: 'Static Pressure', units: 'in.W.C.',
-        x: 68, y: 60, w: 7, h: 5 },
+    'AHU-23-1': [
+      { id: 'phtTemp', address: 'AI301@DEV4004', label: 'Preheat Temp (TS-1)', units: '°F',
+        x: 26, y: 28, w: 8, h: 7 },
+      { id: 'chwTemp', address: 'AI201@DEV4004', label: 'CHW Temp (TS-2)', units: '%',
+        x: 42, y: 28, w: 6, h: 7 },
+      { id: 'fanSpeed', address: 'AO101@DEV4004', label: 'Fan Speed', units: '%',
+        x: 74, y: 28, w: 6, h: 7 },
+      { id: 'cfm', address: 'AO101@DEV4004', label: 'CFM', units: 'CFM',
+        x: 58, y: 15, w: 10, h: 7 },
+      { id: 'phtValve', address: 'AO103@DEV4004', label: 'PHT Valve (V-1)', units: '%',
+        x: 26, y: 45, w: 6, h: 5 },
+      { id: 'chwValve', address: 'AO102@DEV4004', label: 'CHW Valve (V-2)', units: '%',
+        x: 42, y: 45, w: 6, h: 5 },
+      { id: 'plinMin', address: 'AO104@DEV4004', label: 'PLIN MIN', units: '°F',
+        x: 38, y: 45, w: 7, h: 5 },
     ],
   };
 
