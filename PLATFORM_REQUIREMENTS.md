@@ -44,8 +44,8 @@ The primary BMS operator interface containing:
 - Mode panel (right, 30% or 35%) when in Companion or Capstone mode
 
 ### 3.3 EBI Point Detail (`#/ebi/{pointId}/{tab}`)
-Detailed point inspection with 6 tabs:
-- General, Command Priorities, Alarms, History, Recent Events, Advanced
+Detailed point inspection with 4 tabs:
+- General, Alarms, History, Recent Events
 
 ### 3.4 Alarm Summary (`#/alarms`)
 Centralized alarm list with filter tree and sortable columns
@@ -67,7 +67,7 @@ View submitted capstone worksheets, unlock/lock Capstone mode
 | Element | Contents |
 |---------|----------|
 | Title Bar | "SymmetrE R410.2 — Station [operator_name]" + window controls |
-| Menu Bar | Station, Edit, View, Action, Configure, Help, Sign Off |
+| Menu Bar | Station, View, Action, Help, Sign Off |
 | Toolbar | Back, Forward, Reload, Home, System Menu, Alarms, Events + Mode Selector + Chapters |
 | Status Bar | Simulation timestamp │ Selected point BACnet path │ "Honeywell SymmetrE R410.2" |
 
@@ -78,10 +78,14 @@ View submitted capstone worksheets, unlock/lock Capstone mode
 - Help → About dialog
 - Sign Off → Ends session, returns to auth screen
 
+> **Note:** Edit and Configure menus were removed as they had no functional actions in the simulator context.
+
 ### 4.2 Zone Tabs & Outside Air Strip
 - **Tabs**: 💧 Zone Overview, 🌀 AHU-4-4, 🌀 AHU-4-6
 - **OA Strip**: OA Temp (°F), OA Humidity (%RH), OA Wetbulb (°F), OA Dewpoint (°F), OA Enthalpy (BTU/lb)
 - Values sourced from TMY3 weather data via simulation row interpolation
+- **OA Strip visibility**: The OA Strip is ONLY visible on the SymmetrE Station screen, not on EBI or other screens
+- **Troubleshooting**: If OA Strip shows "--.-" values on initial load, toggle simulation speed to 60× briefly to initialize the weather interpolation
 
 ### 4.3 Controls Sidebar (Left, 280px, collapsible)
 **9 Collapsible Sections:**
@@ -116,9 +120,14 @@ Isometric airflow diagram showing:
 - Branch Static Pressure (in.W.C.)
 - Return Air path
 
+**Zone Subtitle & Label:**
+Each AHU graphic displays a subtitle below the main title indicating which zone/space the AHU serves, plus a labeled zone box on the graphic:
+- **AHU-4-4**: Subtitle "Serves: Hotel Guest Rooms — Floors 4–12", zone box labeled "GUEST ROOMS"
+- **AHU-4-6**: Subtitle "Serves: Meeting Rooms & Conference — Level 4", zone box labeled "MEETING ROOMS"
+
 **Interactions:**
 - Hover any point → show point type badge (AI/AO/BI/BO, color-coded)
-- Click a point → navigate to EBI Point Detail for that point
+- Click a point value → navigate to EBI Point Detail (`#/ebi/{address}/general`)
 
 ### 4.5 Simultaneous Heat/Cool Warning
 - Amber overlay appears when PHT Valve >20% AND CHW Valve >20%
@@ -153,12 +162,20 @@ Three mode buttons + Chapters dropdown:
 Format: `System > Subsystem > Point Name`
 - Clicking System → SymmetrE home
 - Clicking Subsystem → that AHU graphic
+- URL format uses BACnet address with `@` character (e.g., `#/ebi/AI301@DEV4004/general`)
+- The router decodes URL-encoded `%40` back to `@` for proper PointRegistry lookup
 
 ### 5.2 Left Panel (Point Sidebar)
 - Vertical bar chart (cyan fill on black background) showing present value as % of range
-- Status dots: Alarm (red), Fault (amber), Overridden (amber), Out-of-Service (gray)
+- Status dots: Alarm (red), Fault (amber), Overridden (purple), Out-of-Service (gray)
 - Present Value with engineering units
-- Mode indicator (Auto / Manual with amber background)
+- Mode indicator: "Auto" with green text on white background / "Manual" with PURPLE background
+
+**Color Conventions (per Lev's feedback):**
+- Purple / reddish-purple = Manual Override
+- Red = Alarm / Fault
+- Gray = Offline / Bad sensor
+- Black = Normal
 
 ### 5.3 General Tab
 Read-only metadata fields:
@@ -185,6 +202,11 @@ Read-only metadata fields:
 - Chronological event log (max 200 entries, newest-first)
 - Event types: Value Change, Mode Transition, Alarm State Change
 - Each entry: Timestamp, Event Type badge, Previous Value, New Value
+- Events are tracked live as state changes occur during simulation playback
+
+**Seed Events on Mount:**
+- If point is already in Manual mode when the tab mounts, a seed "Mode Transition: Auto → Manual" event is shown
+- If point has an active alarm when the tab mounts, a seed "Alarm State Change" event is shown
 
 ---
 
@@ -200,9 +222,14 @@ Icon, Date/Time, Source, Condition, Operator, Action, Priority, Description, Val
 ### 6.3 9-State Alarm Icons
 | Priority | Active + Unack | Active + Ack | Inactive + Unack |
 |----------|---------------|-------------|-----------------|
-| Urgent (red) | Filled + flashing | Filled solid | Outline only |
-| High (amber) | Filled + flashing | Filled solid | Outline only |
-| Low (blue) | Filled + flashing | Filled solid | Outline only |
+| Urgent (red) | Filled + blink animation | Filled solid (no animation) | Outline only |
+| High (amber) | Filled + blink animation | Filled solid (no animation) | Outline only |
+| Low (blue) | Filled + blink animation | Filled solid (no animation) | Outline only |
+
+**Flashing Behavior:**
+- Unacknowledged alarms use a distinct blink animation (opacity oscillates 100% → 15% every 0.8s)
+- Acknowledged alarms show solid filled with no animation
+- This makes the state change clearly visible when an alarm is acknowledged
 
 ### 6.4 Interactions
 - Click column header → sort ascending; click again → descending
@@ -210,9 +237,18 @@ Icon, Date/Time, Source, Condition, Operator, Action, Priority, Description, Val
 - Right-click → context menu (Acknowledge, Close)
 - ✓ Acknowledge button in toolbar (requires AckOnly+ security)
 - ← Back button returns to SymmetrE Station
+- Click a Source address in the alarm table → navigates to EBI Point Detail for that point
+- Acknowledge state persists across the 2-second alarm refresh cycle (not reset on refresh)
 
 ### 6.5 Pre-loaded Faults (6 records)
-F-01 through F-06 covering simultaneous heat/cool, SAT deviation, unoccupied run, OA damper closed, economizer inactive, CO₂ threshold
+| Fault | Source Address | Description |
+|-------|---------------|-------------|
+| F-01 | AO103@DEV4004 | Preheat Coil Valve — Simultaneous heating and cooling |
+| F-02 | AI301@DEV4004 | Supply Air Temp — SAT deviation from setpoint |
+| F-03 | BI601@DEV4004 | Run Schedule — AHU running unoccupied |
+| F-04 | AO104@DEV4004 | OA Damper — Closed during occupied hours |
+| F-05 | AI701@DEV5000 | Outside Air Temp — Economizer inactive when OAT permits |
+| F-06 | AI401@DEV4004 | Return Air CO₂ — CO₂ exceeds threshold |
 
 ---
 
