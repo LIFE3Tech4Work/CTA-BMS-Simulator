@@ -71,7 +71,7 @@
     {
       id: 'preload-F01-1',
       timestamp: new Date('2026-05-15T14:30:00'),
-      source: 'AO_PHT@DEV4004',
+      source: 'AO103@DEV4004',
       condition: 'F-01',
       priority: 'urgent',
       description: 'Simultaneous heating and cooling — PHT and CHW both active',
@@ -85,7 +85,7 @@
     {
       id: 'preload-F02-1',
       timestamp: new Date('2026-05-16T09:15:00'),
-      source: 'AI_SAT@DEV4004',
+      source: 'AI301@DEV4004',
       condition: 'F-02',
       priority: 'high',
       description: 'Supply air temperature deviation exceeds 5°F from setpoint',
@@ -99,7 +99,7 @@
     {
       id: 'preload-F03-1',
       timestamp: new Date('2026-05-18T02:00:00'),
-      source: 'BI_FAN@DEV4004',
+      source: 'BI601@DEV4004',
       condition: 'F-03',
       priority: 'high',
       description: 'AHU-4-4 running during unoccupied hours',
@@ -113,7 +113,7 @@
     {
       id: 'preload-F04-1',
       timestamp: new Date('2026-05-20T10:45:00'),
-      source: 'AO_OAD@DEV4004',
+      source: 'AO104@DEV4004',
       condition: 'F-04',
       priority: 'urgent',
       description: 'Outdoor air damper fully closed during occupied hours',
@@ -127,7 +127,7 @@
     {
       id: 'preload-F06-1',
       timestamp: new Date('2026-05-22T11:30:00'),
-      source: 'AI_CO2@DEV4004',
+      source: 'AI401@DEV4004',
       condition: 'F-06',
       priority: 'urgent',
       description: 'CO2 exceeds ventilation threshold (>800 ppm)',
@@ -141,7 +141,7 @@
     {
       id: 'preload-F05-1',
       timestamp: new Date('2026-06-01T08:00:00'),
-      source: 'AI_OAT@DEV5000',
+      source: 'AI701@DEV5000',
       condition: 'F-05',
       priority: 'high',
       description: 'Economizer not active when OAT permits free cooling',
