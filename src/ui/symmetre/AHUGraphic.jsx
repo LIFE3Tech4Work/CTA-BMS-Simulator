@@ -214,13 +214,13 @@ const AHUGraphic = (() => {
       const registry = window.PointRegistry;
       if (!registry) return;
 
-      // Fan running based on RunSchedule
-      function onRunSchedule(point) {
-        setFanRunning(point.currentValue >= 0.5);
+      // Fan running based on fan speed > 0 (more reliable than schedule alone)
+      function onFanSpeed(point) {
+        setFanRunning(point.currentValue > 0);
       }
-      const runVal = registry.getValue(pointAddresses.runSchedule);
-      if (runVal !== undefined) setFanRunning(runVal >= 0.5);
-      registry.subscribe(pointAddresses.runSchedule, onRunSchedule);
+      const fanVal = registry.getValue(pointAddresses.saFanSpeed);
+      if (fanVal !== undefined) setFanRunning(fanVal > 0);
+      registry.subscribe(pointAddresses.saFanSpeed, onFanSpeed);
 
       // OA Damper value for visual
       function onOADamper(point) {
@@ -231,7 +231,7 @@ const AHUGraphic = (() => {
       registry.subscribe(pointAddresses.oaDamper, onOADamper);
 
       return () => {
-        registry.unsubscribe(pointAddresses.runSchedule, onRunSchedule);
+        registry.unsubscribe(pointAddresses.saFanSpeed, onFanSpeed);
         registry.unsubscribe(pointAddresses.oaDamper, onOADamper);
       };
     }, [pointAddresses]);
