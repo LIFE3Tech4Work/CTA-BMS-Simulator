@@ -81,6 +81,42 @@
           mode: point.mode,
           alarmLifecycle: point.alarmState ? point.alarmState.lifecycle : 'inactive'
         };
+
+        // Seed initial events for non-default states present when the tab mounts
+        var seedEvents = [];
+        var now = new Date();
+        if (window.SimulationEngine && typeof window.SimulationEngine.getCurrentTimestamp === 'function') {
+          var simTime = window.SimulationEngine.getCurrentTimestamp();
+          if (simTime instanceof Date && !isNaN(simTime.getTime())) {
+            now = simTime;
+          }
+        }
+
+        // If point is currently in Manual, show that transition
+        if (point.mode === 'Manual') {
+          seedEvents.push({
+            id: 'seed_mode_' + Math.random().toString(36).substr(2, 6),
+            timestamp: new Date(now.getTime() - 1000), // 1 second ago
+            eventType: 'Mode Transition',
+            previousValue: 'Auto',
+            newValue: 'Manual'
+          });
+        }
+
+        // If point has an active alarm, show that
+        if (point.alarmState && point.alarmState.lifecycle === 'active') {
+          seedEvents.push({
+            id: 'seed_alarm_' + Math.random().toString(36).substr(2, 6),
+            timestamp: new Date(now.getTime() - 500),
+            eventType: 'Alarm State Change',
+            previousValue: 'inactive',
+            newValue: 'active'
+          });
+        }
+
+        if (seedEvents.length > 0) {
+          setEvents(seedEvents);
+        }
       }
 
       function handlePointUpdate(updatedPoint) {
