@@ -15,7 +15,6 @@
   // ─── Tab Definitions ────────────────────────────────────────────────────────
 
   const ZONE_TABS = [
-    { id: 'zone-overview', label: '', icon: '💧', route: '#/symmetre', isZone: true },
     { id: 'AHU-4-4', label: 'AHU-4-4', icon: '🌀', route: '#/symmetre/AHU-4-4', isZone: false },
     { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false }
   ];

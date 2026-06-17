@@ -14,11 +14,8 @@ const SymmetreAppChrome = (function() {
   const TOOLBAR_BUTTONS = [
     { id: 'back', label: 'Back', icon: '◀' },
     { id: 'forward', label: 'Forward', icon: '▶' },
-    { id: 'reload', label: 'Reload', icon: '⟳' },
-    { id: 'home', label: 'Home', icon: '⌂' },
-    { id: 'sysmenu', label: 'System Menu', icon: '☰' },
+    { id: 'reload', label: 'Reload Simulation', icon: '⟳' },
     { id: 'alarms', label: 'Alarms', icon: '🔔' },
-    { id: 'events', label: 'Events', icon: '📋' },
   ];
 
   // ─── Title Bar Decorations (cosmetic only) ──────────────────────────────────
@@ -160,8 +157,17 @@ const SymmetreAppChrome = (function() {
     const handleToolbarClick = useCallback(function(id) {
       if (id === 'alarms') {
         window.location.hash = '#/alarms';
+      } else if (id === 'reload') {
+        // Reset simulation to row 1 (May 1, 2026 00:00)
+        if (window.SimulationEngine) {
+          window.SimulationEngine.jumpToDate(window.SimulationEngine.BASE_DATE);
+          window.SimulationEngine.pause();
+        }
+      } else if (id === 'back') {
+        window.history.back();
+      } else if (id === 'forward') {
+        window.history.forward();
       }
-      // Other toolbar buttons are placeholder for now
     }, []);
 
     return React.createElement('div', {
