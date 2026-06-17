@@ -331,8 +331,17 @@
       React.createElement('div', { className: 'w-40 px-2 py-1.5 truncate' },
         formatTimestamp(alarm.timestamp)
       ),
-      // Source
-      React.createElement('div', { className: 'w-36 px-2 py-1.5 truncate font-mono' },
+      // Source (clickable — navigates to EBI Point Detail)
+      React.createElement('div', {
+        className: 'w-36 px-2 py-1.5 truncate font-mono text-blue-300 hover:text-blue-100 hover:underline cursor-pointer',
+        onClick: function (e) {
+          e.stopPropagation();
+          if (alarm.source) {
+            window.location.hash = '#/ebi/' + alarm.source + '/general';
+          }
+        },
+        title: alarm.source ? 'Navigate to point detail: ' + alarm.source : ''
+      },
         alarm.source || '—'
       ),
       // Condition
