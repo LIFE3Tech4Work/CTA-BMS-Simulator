@@ -16,7 +16,8 @@
 
   const ZONE_TABS = [
     { id: 'AHU-4-4', label: 'AHU-4-4', icon: '🌀', route: '#/symmetre/AHU-4-4', isZone: false },
-    { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false }
+    { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
+    { id: 'AHU-23-1', label: 'AHU-23-1', icon: '🌀', route: '#/symmetre/AHU-23-1', isZone: false }
   ];
 
   // ─── Outside Air Data Strip ─────────────────────────────────────────────────
@@ -81,7 +82,9 @@
     useEffect(function () {
       function syncFromHash() {
         var hash = window.location.hash || '';
-        if (hash.indexOf('AHU-4-6') !== -1) {
+        if (hash.indexOf('AHU-23-1') !== -1) {
+          setActiveTab('AHU-23-1');
+        } else if (hash.indexOf('AHU-4-6') !== -1) {
           setActiveTab('AHU-4-6');
         } else if (hash.indexOf('AHU-4-4') !== -1 || hash === '#/symmetre') {
           setActiveTab('AHU-4-4');
