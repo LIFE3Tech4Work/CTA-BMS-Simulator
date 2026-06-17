@@ -132,16 +132,12 @@
     // ─── Render ───────────────────────────────────────────────────────────────
 
     return React.createElement('div', {
-      className: 'relative h-full w-full',
+      className: 'flex flex-col h-full w-full',
       'data-testid': 'free-explore'
     },
-      // BMS content fills the full area
-      bmsContent,
-
-      // ─── Floating Top Toolbar (overlays BMS content) ──────────────────────
+      // ─── Top Toolbar (fixed height, not floating) ─────────────────────────
       React.createElement('div', {
-        className: 'absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-2 bg-gray-900/95 border-b border-gray-700',
-        style: { backdropFilter: 'blur(4px)' }
+        className: 'flex-shrink-0 flex items-center justify-between px-4 py-1 bg-gray-900 border-b border-gray-700 z-40',
       },
         // Left: Mode label + scenario button
         React.createElement('div', { className: 'flex items-center gap-3' },
@@ -270,7 +266,12 @@
             );
           })
         )
-      )
+      ),
+
+      // ─── BMS Content (fills remaining space) ──────────────────────────────
+      React.createElement('div', {
+        className: 'flex-1 min-h-0 overflow-auto relative'
+      }, bmsContent)
     );
   }
 
