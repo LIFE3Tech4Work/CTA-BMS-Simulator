@@ -166,10 +166,6 @@
                 React.createElement('div', { className: 'text-gray-400' },
                   React.createElement('span', { className: 'text-gray-500' }, 'Student: '),
                   React.createElement('span', { className: 'text-bms-cyan' }, 'cta_student / bms2026')
-                ),
-                React.createElement('div', { className: 'text-gray-400' },
-                  React.createElement('span', { className: 'text-gray-500' }, 'Instructor: '),
-                  React.createElement('span', { className: 'text-bms-cyan' }, 'cta_instructor / bms2026')
                 )
               )
             )

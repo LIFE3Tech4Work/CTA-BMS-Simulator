@@ -58,7 +58,7 @@ const SymmetreAppChrome = (function() {
         { label: 'Speed: 3600×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('3600x'); } },
       ],
       'Help': [
-        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nCTA Training Building — NYC Downtown'); } },
+        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nCTA Training Building — NYC Downtown\n\nProperty Primary Use: Multifamily Home\nProperty Secondary Use: Hotel'); } },
       ],
     };
 
@@ -175,12 +175,17 @@ const SymmetreAppChrome = (function() {
       }),
       // Spacer to push mode selector to the right
       React.createElement('div', { className: 'flex-1 min-w-0' }),
-      // Mode Selector (Companion / Explore / Capstone)
-      window.ModeSelector
-        ? React.createElement('div', { className: 'flex-shrink-0' },
+      // Mode Selector (Companion / Explore / Capstone) — only for instructor level
+      (function() {
+        var auth = useContext(window.AuthContext);
+        var isInstructor = auth && auth.securityLevel === 'Engr';
+        if (isInstructor && window.ModeSelector) {
+          return React.createElement('div', { className: 'flex-shrink-0' },
             React.createElement(window.ModeSelector, null)
-          )
-        : null
+          );
+        }
+        return null;
+      })()
     );
   }
 
