@@ -73,6 +73,51 @@
     );
   }
 
+  // ─── Honeywell-style OA Strip (blue theme, for AHU-23-1) ─────────────────────
+
+  function HoneywellOAStrip() {
+    const simContext = useContext(window.SimulationContext);
+    const [weatherData, setWeatherData] = useState(null);
+
+    useEffect(function () {
+      var row = simContext.currentRow || 1;
+      var fraction = simContext.interpolationFraction || 0;
+      if (window.TMY3Projector && window.TMY3Projector.interpolateWeather) {
+        var data = window.TMY3Projector.interpolateWeather(row, fraction);
+        setWeatherData(data);
+      }
+    }, [simContext.currentRow, simContext.interpolationFraction]);
+
+    function fmt(value) {
+      if (value == null || isNaN(value)) return '--.-';
+      return Number(value).toFixed(1);
+    }
+
+    var items = [
+      { label: 'OA TEMPERATURE', value: weatherData ? fmt(weatherData.dryBulb) : '--.-', units: '°F' },
+      { label: 'OA RH', value: weatherData ? fmt(weatherData.relHumidity) : '--.-', units: '%RH' },
+      { label: 'OA ENTHALPY', value: weatherData ? fmt(weatherData.enthalpy) : '--.-', units: 'BTU' },
+      { label: 'CWS TEMPERATURE', value: weatherData ? fmt(weatherData.wetBulb) : '--.-', units: '°F' },
+      { label: 'OA WETBULB', value: weatherData ? fmt(weatherData.dewPoint) : '--.-', units: '°F' },
+    ];
+
+    return React.createElement('div', {
+      className: 'flex items-center justify-around px-4 py-1',
+      style: { minHeight: '28px', background: 'linear-gradient(180deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%)', borderTop: '2px solid #1a5276', borderBottom: '2px solid #1a5276' }
+    },
+      items.map(function (item, index) {
+        return React.createElement('div', {
+          key: item.label,
+          className: 'flex items-center gap-2 text-xs'
+        },
+          React.createElement('span', { className: 'text-gray-300 font-semibold tracking-wide', style: { fontSize: '10px', letterSpacing: '0.5px' } }, item.label),
+          React.createElement('span', { className: 'text-white font-mono font-bold' }, item.value),
+          React.createElement('span', { className: 'text-gray-400', style: { fontSize: '9px' } }, item.units)
+        );
+      })
+    );
+  }
+
   // ─── Zone Tabs Component ────────────────────────────────────────────────────
 
   function ZoneTabs() {
@@ -141,8 +186,10 @@
         })
       ),
 
-      // Outside Air data strip
-      React.createElement(OutsideAirStrip, null)
+      // Outside Air data strip (Honeywell blue style for AHU-23-1, standard for others)
+      activeTab === 'AHU-23-1'
+        ? React.createElement(HoneywellOAStrip, null)
+        : React.createElement(OutsideAirStrip, null)
     );
   }
 
