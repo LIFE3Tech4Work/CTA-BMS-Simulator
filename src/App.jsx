@@ -105,22 +105,20 @@ function SymmetreScreen({ params }) {
           : null,
         // Main content area (AHU graphic + controls sidebar)
         React.createElement('div', { className: 'flex flex-1 min-h-0' },
-          // Controls Sidebar + LL97 Panel
-          React.createElement('div', { className: 'flex flex-col h-full min-h-0 flex-shrink-0 border-r border-gray-700 bg-gray-800' },
+          // Controls Sidebar (scrollable column)
+          React.createElement('div', {
+            className: 'flex-shrink-0 overflow-y-auto border-r border-gray-700 bg-gray-800',
+            style: { width: params.ahuId === 'AHU-23-1' ? '280px' : '250px' }
+          },
             (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewControlsSidebar)
-              ? React.createElement('div', { className: 'flex-1 h-0 overflow-y-auto' },
-                  React.createElement(window.AHU44NewControlsSidebar, null)
-                )
+              ? React.createElement(window.AHU44NewControlsSidebar, null)
               : (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
-              ? React.createElement('div', { className: 'flex-1 h-0 overflow-y-auto' },
-                  React.createElement(window.AHU23ControlsSidebar, null)
-                )
+              ? React.createElement(window.AHU23ControlsSidebar, null)
               : (window.ControlsSidebar
-                ? React.createElement('div', { className: 'flex-1 h-0 overflow-y-auto' },
-                    React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
-                  )
+                ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
                 : null),
-            (params.ahuId !== 'AHU-23-1' && params.ahuId !== 'AHU-4-4_NEW' && window.LL97Panel)
+            // LL97 Panel at bottom of sidebar (scrolls with it)
+            window.LL97Panel
               ? React.createElement(window.LL97Panel, null)
               : null
           ),

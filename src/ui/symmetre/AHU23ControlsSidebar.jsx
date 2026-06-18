@@ -188,8 +188,8 @@ const AHU23ControlsSidebar = (() => {
     }
 
     return React.createElement('aside', {
-      className: 'flex-shrink-0 border-r border-gray-400',
-      style: { width: '280px', backgroundColor: '#c4d6ea' },
+      className: 'w-full border-r border-gray-400',
+      style: { backgroundColor: '#c4d6ea' },
     },
       // Header bar
       React.createElement('div', {
