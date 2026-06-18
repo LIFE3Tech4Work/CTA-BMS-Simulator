@@ -107,7 +107,7 @@ function SymmetreScreen({ params }) {
         React.createElement('div', { className: 'flex flex-1 min-h-0' },
           // Controls Sidebar (scrollable column)
           React.createElement('div', {
-            className: 'flex-shrink-0 overflow-y-auto border-r border-gray-700 bg-gray-800',
+            className: 'h-full flex-shrink-0 overflow-y-auto border-r border-gray-700 bg-gray-800',
             style: { width: params.ahuId === 'AHU-23-1' ? '280px' : '250px' }
           },
             (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewControlsSidebar)
