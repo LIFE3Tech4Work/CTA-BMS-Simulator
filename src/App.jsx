@@ -116,7 +116,7 @@ function SymmetreScreen({ params }) {
                     React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
                   )
                 : null),
-            window.LL97Panel
+            (params.ahuId !== 'AHU-23-1' && window.LL97Panel)
               ? React.createElement(window.LL97Panel, null)
               : null
           ),

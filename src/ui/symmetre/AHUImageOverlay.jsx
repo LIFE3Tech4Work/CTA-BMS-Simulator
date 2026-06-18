@@ -130,13 +130,28 @@ const AHUImageOverlay = (() => {
       'data-testid': 'ahu-image-overlay',
     },
       // Background image (the real Honeywell SymmetrE screenshot)
-      React.createElement('img', {
-        src: imageSrc,
-        alt: effectiveId + ' — Honeywell SymmetrE AHU Schematic',
-        className: 'w-full h-full object-contain',
-        draggable: false,
-        style: { imageRendering: 'auto' },
-      }),
+      // Cropped to show only the schematic area (removes station toolbar and status bar)
+      React.createElement('div', {
+        className: 'w-full h-full overflow-hidden',
+        style: { position: 'relative' }
+      },
+        React.createElement('img', {
+          src: imageSrc,
+          alt: effectiveId + ' — Honeywell SymmetrE AHU Schematic',
+          className: 'absolute',
+          draggable: false,
+          style: {
+            // Crop: zoom into the schematic area, skip top toolbar (~12%) and bottom status (~8%)
+            top: '-8%',
+            left: '-2%',
+            width: '104%',
+            height: '120%',
+            objectFit: 'cover',
+            objectPosition: 'center 55%',
+            imageRendering: 'auto',
+          },
+        })
+      ),
 
       // Hotspot overlay layer (absolute positioned on top of image)
       React.createElement('div', {
