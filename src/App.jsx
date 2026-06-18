@@ -107,11 +107,15 @@ function SymmetreScreen({ params }) {
         React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
           // Controls Sidebar + LL97 Panel
           React.createElement('div', { className: 'flex flex-col h-full flex-shrink-0 border-r border-gray-700 bg-gray-800' },
-            window.ControlsSidebar
+            (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
               ? React.createElement('div', { className: 'flex-1 overflow-y-auto' },
-                  React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
+                  React.createElement(window.AHU23ControlsSidebar, null)
                 )
-              : null,
+              : (window.ControlsSidebar
+                ? React.createElement('div', { className: 'flex-1 overflow-y-auto' },
+                    React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
+                  )
+                : null),
             window.LL97Panel
               ? React.createElement(window.LL97Panel, null)
               : null
