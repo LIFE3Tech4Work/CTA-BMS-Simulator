@@ -1,17 +1,21 @@
 /**
  * AHUImageOverlay.jsx — Real Honeywell SymmetrE AHU graphic as background
- * image with interactive hotspot overlays for live point values.
+ * image with READ-ONLY hotspot overlays for live point values.
  *
- * Uses the actual BMS screenshots as background, then positions clickable
- * value displays on top at the locations where data appears in the real system.
- * This mirrors how many real BMS systems work — static graphic with data overlays.
+ * Data flow:
+ *   window.AHU23State (shared state) → this overlay (READ-ONLY display)
+ *   The Controls Sidebar is the ONLY place where values are edited.
+ *   This component never modifies state — it only subscribes and renders.
+ *
+ * Uses the actual BMS screenshots as background, then positions value
+ * displays on top at the locations where data appears in the real system.
  *
  * Props:
- *   ahuId - 'AHU-4-4' or 'AHU-4-6'
+ *   ahuId - 'AHU-23-1'
  *
  * Hotspot positions are defined as percentages of image dimensions.
  * To adjust positions: open the image, measure pixel coords, divide by
- * image size (3604 × 1452) and multiply by 100 to get %.
+ * image size and multiply by 100 to get %.
  *
  * No import/export — exposed as window.AHUImageOverlay
  */
@@ -19,7 +23,7 @@
 const AHUImageOverlay = (() => {
   'use strict';
 
-  const { useState, useEffect, useCallback } = React;
+  const { useState, useEffect, useCallback, useRef } = React;
 
   // ─── Image paths (served from src/assets/) ──────────────────────────────────
 
@@ -30,59 +34,61 @@ const AHUImageOverlay = (() => {
   // ─── Hotspot definitions ────────────────────────────────────────────────────
   // x, y = top-left corner as % of image width/height
   // w, h = width/height as % of image
-  // Positions based on the Honeywell SymmetrE AHU-23-1 screenshot
+  // stateKey = key in window.AHU23State to read from
+  // All hotspots are READ-ONLY — they display calculated values from the controller
 
   const HOTSPOT_MAP = {
     'AHU-23-1': [
-      { id: 'phtTemp', address: 'AI301@DEV4004', label: 'Preheat Temp (TS-1)', units: '°F',
-        x: 26, y: 28, w: 8, h: 7 },
-      { id: 'chwTemp', address: 'AI201@DEV4004', label: 'CHW Temp (TS-2)', units: '%',
-        x: 42, y: 28, w: 6, h: 7 },
-      { id: 'fanSpeed', address: 'AO101@DEV4004', label: 'Fan Speed', units: '%',
-        x: 74, y: 28, w: 6, h: 7 },
-      { id: 'cfm', address: 'AO101@DEV4004', label: 'CFM', units: 'CFM',
-        x: 58, y: 15, w: 10, h: 7 },
-      { id: 'phtValve', address: 'AO103@DEV4004', label: 'PHT Valve (V-1)', units: '%',
-        x: 26, y: 45, w: 6, h: 5 },
-      { id: 'chwValve', address: 'AO102@DEV4004', label: 'CHW Valve (V-2)', units: '%',
-        x: 42, y: 45, w: 6, h: 5 },
-      { id: 'plinMin', address: 'AO104@DEV4004', label: 'PLIN MIN', units: '°F',
-        x: 38, y: 45, w: 7, h: 5 },
+      // Temperature sensors
+      { id: 'phtTemp', stateKey: 'preheatTemp', label: 'TS-1 (PHT Discharge)', units: '°F',
+        x: 25, y: 22, w: 7, h: 6 },
+      { id: 'satTemp', stateKey: 'supplyAirTemp', label: 'TS-2 (Supply Air)', units: '°F',
+        x: 42, y: 22, w: 7, h: 6 },
+      // Fan output
+      { id: 'cfm', stateKey: 'cfm', label: 'Airflow', units: 'CFM',
+        x: 60, y: 12, w: 9, h: 6 },
+      { id: 'fanSpeed', stateKey: 'fanSpeed', label: 'VFD Speed', units: '%',
+        x: 72, y: 30, w: 6, h: 5 },
+      // Damper and valves
+      { id: 'oaDamper', stateKey: 'oaDamperPosition', label: 'OA Damper', units: '%',
+        x: 6, y: 42, w: 6, h: 5 },
+      { id: 'phtValve', stateKey: 'phtValvePosition', label: 'V-1 PHT Valve', units: '%',
+        x: 25, y: 42, w: 6, h: 5 },
+      { id: 'chwValve', stateKey: 'chwValvePosition', label: 'V-2 CHW Valve', units: '%',
+        x: 42, y: 42, w: 6, h: 5 },
+      // Status
+      { id: 'fanStatus', stateKey: 'fanRunning', label: 'Fan Status', units: '',
+        x: 62, y: 55, w: 10, h: 7 },
+      // Economizer status indicator
+      { id: 'econStatus', stateKey: 'economizerActive', label: 'Economizer', units: '',
+        x: 6, y: 55, w: 8, h: 5 },
     ],
   };
 
-  // ─── Hook: live value from PointRegistry ────────────────────────────────────
+  // ─── Hotspot Component (reads from window.AHU23State via controller subscription) ──
 
-  function useLiveValue(address) {
-    var _state = useState(null);
-    var value = _state[0];
-    var setValue = _state[1];
+  function Hotspot({ spot }) {
+    var ctrl = window.AHU23Controller;
+    var initialState = window.AHU23State || (ctrl ? ctrl.getState() : {});
+    var [value, setValue] = useState(initialState[spot.stateKey]);
 
     useEffect(function() {
-      var reg = window.PointRegistry;
-      if (!reg) return;
-      var init = reg.getValue(address);
-      if (init !== undefined) setValue(init);
-      function onUpdate(pt) { setValue(pt.currentValue); }
-      reg.subscribe(address, onUpdate);
-      return function() { reg.unsubscribe(address, onUpdate); };
-    }, [address]);
+      if (!ctrl) return;
+      // Subscribe to state changes — READ-ONLY consumption
+      var unsub = ctrl.subscribe(function(s) {
+        setValue(s[spot.stateKey]);
+      });
+      return unsub;
+    }, [spot.stateKey]);
 
-    return value;
-  }
-
-  // ─── Hotspot Component ──────────────────────────────────────────────────────
-
-  function Hotspot({ spot, onClick }) {
-    var value = useLiveValue(spot.address);
-
-    var display = '--.-';
+    // Format the display value
+    var display = '--';
     if (value !== null && value !== undefined) {
-      if (typeof value === 'number') {
-        if (spot.units === 'ppm') {
-          display = Math.round(value).toString();
-        } else if (spot.units === 'in.W.C.') {
-          display = value.toFixed(2);
+      if (typeof value === 'boolean') {
+        display = value ? 'ON' : 'OFF';
+      } else if (typeof value === 'number') {
+        if (spot.stateKey === 'cfm') {
+          display = Math.round(value).toLocaleString();
         } else {
           display = value.toFixed(1);
         }
@@ -91,46 +97,47 @@ const AHUImageOverlay = (() => {
       }
     }
 
-    return React.createElement('button', {
+    // Color coding for status hotspots
+    var bgClass = 'bg-black/70 border-cyan-500/50';
+    if (typeof value === 'boolean') {
+      bgClass = value
+        ? 'bg-green-900/80 border-green-400/70'
+        : 'bg-red-900/70 border-red-400/50';
+    }
+
+    return React.createElement('div', {
       className: 'absolute flex items-center justify-center rounded ' +
-        'bg-black/70 hover:bg-cyan-900/80 ' +
-        'border border-cyan-500/50 hover:border-cyan-300 ' +
-        'transition-all cursor-pointer ' +
-        'text-[10px] sm:text-xs font-mono text-white font-bold ' +
-        'shadow-lg backdrop-blur-sm',
+        bgClass + ' border ' +
+        'text-[9px] sm:text-[10px] font-mono text-white font-bold ' +
+        'shadow-lg pointer-events-none select-none',
       style: {
         left: spot.x + '%',
         top: spot.y + '%',
         width: spot.w + '%',
         height: spot.h + '%',
-        minWidth: '50px',
-        minHeight: '22px',
+        minWidth: '40px',
+        minHeight: '18px',
       },
-      onClick: function() { onClick(spot.address); },
-      title: spot.label + ': ' + display + ' ' + spot.units + ' — Click for point detail',
+      title: spot.label + ': ' + display + (spot.units ? ' ' + spot.units : '') + ' (read-only)',
       'aria-label': spot.label + ' ' + display + ' ' + spot.units,
+      role: 'status',
     },
-      React.createElement('span', null, display + ' ' + spot.units)
+      React.createElement('span', null, display + (spot.units ? ' ' + spot.units : ''))
     );
   }
 
   // ─── Main Component ─────────────────────────────────────────────────────────
 
   function AHUImageOverlayComponent({ ahuId }) {
-    var effectiveId = ahuId || 'AHU-4-4';
-    var imageSrc = IMAGE_MAP[effectiveId] || IMAGE_MAP['AHU-4-4'];
+    var effectiveId = ahuId || 'AHU-23-1';
+    var imageSrc = IMAGE_MAP[effectiveId] || IMAGE_MAP['AHU-23-1'];
     var hotspots = HOTSPOT_MAP[effectiveId] || [];
 
-    var handleClick = useCallback(function(address) {
-      window.location.hash = '#/ebi/' + address + '/general';
-    }, []);
-
     return React.createElement('div', {
-      className: 'relative w-full h-full overflow-hidden bg-gray-900',
+      className: 'relative w-full min-h-full bg-gray-900',
       'data-testid': 'ahu-image-overlay',
     },
       // Background image (the real Honeywell SymmetrE screenshot)
-      // Show the full schematic without cropping
       React.createElement('img', {
         src: imageSrc,
         alt: effectiveId + ' — Honeywell SymmetrE AHU Schematic',
@@ -139,16 +146,16 @@ const AHUImageOverlay = (() => {
         style: { imageRendering: 'auto' },
       }),
 
-      // Hotspot overlay layer (absolute positioned on top of image)
+      // READ-ONLY hotspot overlay layer
       React.createElement('div', {
         className: 'absolute inset-0',
-        'aria-label': 'Interactive point hotspots — click any value to view point detail',
+        'aria-label': 'AHU-23-1 live values — read-only display driven by Controls Sidebar',
+        role: 'region',
       },
         hotspots.map(function(spot) {
           return React.createElement(Hotspot, {
             key: spot.id,
             spot: spot,
-            onClick: handleClick,
           });
         })
       )

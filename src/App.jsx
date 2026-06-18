@@ -29,7 +29,7 @@ const SimulationContext = createContext({
 });
 
 const ModeContext = createContext({
-  currentMode: 'companion'
+  currentMode: 'explore'
 });
 
 const AlarmContext = createContext({
@@ -50,7 +50,7 @@ function parseRoute(hash) {
   const parts = cleaned.split('/');
 
   if (parts[0] === 'symmetre') {
-    return { screen: 'symmetre', params: { ahuId: parts[1] || 'AHU-4-4' } };
+    return { screen: 'symmetre', params: { ahuId: parts[1] || 'AHU-4-4_NEW' } };
   }
   if (parts[0] === 'ebi') {
     return { screen: 'ebi', params: { pointId: decodeURIComponent(parts[1] || ''), tab: parts[2] || 'general' } };
@@ -104,25 +104,31 @@ function SymmetreScreen({ params }) {
           ? React.createElement(window.ZoneTabs, null)
           : null,
         // Main content area (AHU graphic + controls sidebar)
-        React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
+        React.createElement('div', { className: 'flex flex-1 min-h-0' },
           // Controls Sidebar + LL97 Panel
-          React.createElement('div', { className: 'flex flex-col h-full flex-shrink-0 border-r border-gray-700 bg-gray-800' },
-            (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
-              ? React.createElement('div', { className: 'flex-1 overflow-y-auto' },
+          React.createElement('div', { className: 'flex flex-col min-h-0 flex-shrink-0 border-r border-gray-700 bg-gray-800' },
+            (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewControlsSidebar)
+              ? React.createElement('div', { className: 'flex-1 min-h-0 overflow-hidden' },
+                  React.createElement(window.AHU44NewControlsSidebar, null)
+                )
+              : (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
+              ? React.createElement('div', { className: 'flex-1 min-h-0 overflow-hidden' },
                   React.createElement(window.AHU23ControlsSidebar, null)
                 )
               : (window.ControlsSidebar
-                ? React.createElement('div', { className: 'flex-1 overflow-y-auto' },
+                ? React.createElement('div', { className: 'flex-1 min-h-0 overflow-hidden' },
                     React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
                   )
                 : null),
-            (params.ahuId !== 'AHU-23-1' && window.LL97Panel)
+            (params.ahuId !== 'AHU-23-1' && params.ahuId !== 'AHU-4-4_NEW' && window.LL97Panel)
               ? React.createElement(window.LL97Panel, null)
               : null
           ),
-          // AHU Graphic area
-          React.createElement('div', { className: 'flex-1 relative flex items-center justify-center text-white' },
-            (params.ahuId === 'AHU-23-1' && window.AHUImageOverlay)
+          // AHU Graphic area (scrollable)
+          React.createElement('div', { className: 'flex-1 relative overflow-auto bg-gray-900' },
+            (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewImageOverlay)
+              ? React.createElement(window.AHU44NewImageOverlay, null)
+              : (params.ahuId === 'AHU-23-1' && window.AHUImageOverlay)
               ? React.createElement(window.AHUImageOverlay, { ahuId: 'AHU-23-1' })
               : (window.AHUGraphic
                 ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4' })
@@ -374,7 +380,7 @@ function App() {
 
   // Mode state
   const [modeState, setModeState] = useState({
-    currentMode: 'companion'
+    currentMode: 'explore'
   });
 
   // Simulation state

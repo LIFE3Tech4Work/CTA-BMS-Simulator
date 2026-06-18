@@ -21,6 +21,10 @@ app.use(express.static(path.join(__dirname, 'src'), {
     if (filePath.endsWith('.jsx')) {
       res.setHeader('Content-Type', 'application/javascript');
     }
+    // Disable caching for development
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
   }
 }));
 

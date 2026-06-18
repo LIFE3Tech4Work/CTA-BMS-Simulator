@@ -5,28 +5,84 @@
  * SymmetrE AHU screen: 3D duct illusion, coil cross-hatching, pipe runs,
  * valve indicators, VFD panel, alarm status panel.
  *
- * This is a TEST/DEMO tab showing AHU-23-1 (the Memorial Sloan Kettering
- * unit referenced in Lev's training lectures).
+ * READ-ONLY DISPLAY: All values shown on this diagram are driven reactively
+ * by window.AHU23State (written by AHU23Controller). Editing happens ONLY
+ * in the Controls Sidebar (AHU23ControlsSidebar.jsx).
  *
- * Uses static values for now (not connected to PointRegistry).
+ * Engineering Relationships Displayed:
+ * - Run Schedule → Fan ON/OFF + CFM
+ * - Fan Speed % → CFM = speed × 16500 / 100
+ * - Cooling Coil SP → CHW valve % modulation
+ * - Heating Coil SP → PHT valve % modulation
+ * - OAT + Enthalpy OK → Economizer active (OA damper > minimum)
+ * - Minimum Position (20%) → OA damper floor
+ * - CO₂ > setpoint → OA damper increases above minimum
+ *
  * No import/export — exposed as window.AHU23Graphic
  */
 
 const AHU23Graphic = (() => {
-  const { useState } = React;
+  const { useState, useEffect } = React;
 
   function AHU23GraphicComponent() {
-    // Static demo values (this AHU is for visual reference, not live data)
-    var phtTemp = 94.0;
-    var chwTemp = 0;
-    var fanSpeed = 75;
-    var cfm = 12425;
-    var fanRunning = true;
-    var oaDamperPct = 0;
-    var phtValvePct = 0;
-    var chwValvePct = 0;
-    var plinMin = 50.0;
-    var datSetpoint = 55.0;
+    // ── Subscribe to AHU23Controller for live reactive values ──────────────────
+    var ctrl = window.AHU23Controller;
+    var initialState = window.AHU23State || (ctrl ? ctrl.getState() : {});
+
+    var [state, setState] = useState({
+      preheatTemp: initialState.preheatTemp || 0,
+      supplyAirTemp: initialState.supplyAirTemp || 0,
+      fanSpeed: initialState.fanSpeed || 0,
+      cfm: initialState.cfm || 0,
+      fanRunning: initialState.fanRunning || false,
+      oaDamperPosition: initialState.oaDamperPosition || 0,
+      phtValvePosition: initialState.phtValvePosition || 0,
+      chwValvePosition: initialState.chwValvePosition || 0,
+      plenumMinSetpoint: initialState.plenumMinSetpoint || 40,
+      coolingCoilSetpoint: initialState.coolingCoilSetpoint || 60,
+      economizerActive: initialState.economizerActive || false,
+      phtValveStatus: initialState.phtValveStatus || 'OFF',
+      chwValveStatus: initialState.chwValveStatus || 'OFF',
+      mixedAirTemp: initialState.mixedAirTemp || 0,
+    });
+
+    useEffect(function() {
+      if (!ctrl) return;
+      var unsub = ctrl.subscribe(function(s) {
+        setState({
+          preheatTemp: s.preheatTemp,
+          supplyAirTemp: s.supplyAirTemp,
+          fanSpeed: s.fanSpeed,
+          cfm: s.cfm,
+          fanRunning: s.fanRunning,
+          oaDamperPosition: s.oaDamperPosition,
+          phtValvePosition: s.phtValvePosition,
+          chwValvePosition: s.chwValvePosition,
+          plenumMinSetpoint: s.plenumMinSetpoint,
+          coolingCoilSetpoint: s.coolingCoilSetpoint,
+          economizerActive: s.economizerActive,
+          phtValveStatus: s.phtValveStatus,
+          chwValveStatus: s.chwValveStatus,
+          mixedAirTemp: s.mixedAirTemp,
+        });
+      });
+      return unsub;
+    }, []);
+
+    // Destructure for SVG rendering
+    var phtTemp = state.preheatTemp;
+    var satTemp = state.supplyAirTemp;
+    var fanSpeed = state.fanSpeed;
+    var cfm = state.cfm;
+    var fanRunning = state.fanRunning;
+    var oaDamperPct = state.oaDamperPosition;
+    var phtValvePct = state.phtValvePosition;
+    var chwValvePct = state.chwValvePosition;
+    var plinMin = state.plenumMinSetpoint;
+    var datSetpoint = state.coolingCoilSetpoint;
+    var econActive = state.economizerActive;
+    var phtStatus = state.phtValveStatus;
+    var chwStatus = state.chwValveStatus;
 
     return React.createElement('div', {
       className: 'relative w-full h-full flex flex-col',
@@ -84,6 +140,10 @@ const AHU23Graphic = (() => {
           React.createElement('text', { x: 30, y: 127, fontSize: 9, fill: '#333', fontWeight: 'bold', fontFamily: 'Arial' }, 'OUTDOOR AIR'),
           React.createElement('polygon', { points: '55,132 65,127 65,137', fill: '#333' }),
           React.createElement('line', { x1: 65, y1: 132, x2: 70, y2: 132, stroke: '#333', strokeWidth: 2 }),
+          // OA Damper % display (driven by economizer/CO2 logic)
+          React.createElement('rect', { x: 72, y: 148, width: 50, height: 16, fill: '#fff', stroke: '#555', strokeWidth: 0.5 }),
+          React.createElement('text', { x: 97, y: 160, textAnchor: 'middle', fontSize: 10, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, oaDamperPct.toFixed(1) + ' %'),
+          React.createElement('text', { x: 97, y: 173, textAnchor: 'middle', fontSize: 6, fill: '#555', fontFamily: 'Arial' }, 'OA DAMPER'),
 
           // ── SUPPLY AIR (right) ──
           React.createElement('text', { x: 840, y: 127, fontSize: 9, fill: '#333', fontWeight: 'bold', fontFamily: 'Arial' }, 'SUPPLY AIR'),
@@ -143,13 +203,13 @@ const AHU23Graphic = (() => {
 
           // Valve V-1
           React.createElement('rect', { x: 218, y: 260, width: 24, height: 28, fill: '#e0e0e0', stroke: '#888', strokeWidth: 0.8, rx: 2 }),
-          React.createElement('circle', { cx: 230, cy: 270, r: 7, fill: '#cc0000', stroke: '#800000', strokeWidth: 1 }),
-          React.createElement('text', { x: 230, y: 273, textAnchor: 'middle', fontSize: 5, fill: '#fff', fontWeight: 'bold', fontFamily: 'Arial' }, 'OFF'),
-          React.createElement('text', { x: 230, y: 283, textAnchor: 'middle', fontSize: 6, fill: '#000', fontFamily: 'Arial' }, 'OFF'),
+          React.createElement('circle', { cx: 230, cy: 270, r: 7, fill: phtStatus === 'ON' ? '#00a651' : '#cc0000', stroke: phtStatus === 'ON' ? '#006030' : '#800000', strokeWidth: 1 }),
+          React.createElement('text', { x: 230, y: 273, textAnchor: 'middle', fontSize: 5, fill: '#fff', fontWeight: 'bold', fontFamily: 'Arial' }, phtStatus),
+          React.createElement('text', { x: 230, y: 283, textAnchor: 'middle', fontSize: 6, fill: '#000', fontFamily: 'Arial' }, phtStatus),
           React.createElement('text', { x: 230, y: 300, textAnchor: 'middle', fontSize: 7, fill: '#333', fontWeight: 'bold', fontFamily: 'Arial' }, 'V-1'),
 
           // Preheat valve % display
-          React.createElement('text', { x: 245, y: 165, textAnchor: 'middle', fontSize: 10, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, phtValvePct + ' %'),
+          React.createElement('text', { x: 245, y: 165, textAnchor: 'middle', fontSize: 10, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, phtValvePct.toFixed(1) + ' %'),
 
           // ══════════════════════════════════════════════════════════════════════
           // CHW COIL (Coil 2)
@@ -169,7 +229,7 @@ const AHU23Graphic = (() => {
           React.createElement('text', { x: 399, y: 80, textAnchor: 'middle', fontSize: 6, fill: '#333', fontFamily: 'Arial' }, 'FZ-2'),
           React.createElement('text', { x: 429, y: 80, textAnchor: 'middle', fontSize: 6, fill: '#333', fontFamily: 'Arial' }, 'TS-2'),
           // Temperature display
-          React.createElement('text', { x: 415, y: 115, textAnchor: 'middle', fontSize: 16, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, chwTemp + ' %'),
+          React.createElement('text', { x: 415, y: 115, textAnchor: 'middle', fontSize: 16, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, satTemp.toFixed(1) + '°F'),
 
           // CHW pipes (dark red)
           React.createElement('rect', { x: 395, y: 145, width: 10, height: 95, fill: '#7a0000', stroke: '#4a0000', strokeWidth: 1 }),
@@ -182,13 +242,13 @@ const AHU23Graphic = (() => {
 
           // Valve V-2
           React.createElement('rect', { x: 388, y: 260, width: 24, height: 28, fill: '#e0e0e0', stroke: '#888', strokeWidth: 0.8, rx: 2 }),
-          React.createElement('circle', { cx: 400, cy: 270, r: 7, fill: '#cc0000', stroke: '#800000', strokeWidth: 1 }),
-          React.createElement('text', { x: 400, y: 273, textAnchor: 'middle', fontSize: 5, fill: '#fff', fontWeight: 'bold', fontFamily: 'Arial' }, 'OFF'),
-          React.createElement('text', { x: 400, y: 283, textAnchor: 'middle', fontSize: 6, fill: '#000', fontFamily: 'Arial' }, 'OFF'),
+          React.createElement('circle', { cx: 400, cy: 270, r: 7, fill: chwStatus === 'ON' ? '#00a651' : '#cc0000', stroke: chwStatus === 'ON' ? '#006030' : '#800000', strokeWidth: 1 }),
+          React.createElement('text', { x: 400, y: 273, textAnchor: 'middle', fontSize: 5, fill: '#fff', fontWeight: 'bold', fontFamily: 'Arial' }, chwStatus),
+          React.createElement('text', { x: 400, y: 283, textAnchor: 'middle', fontSize: 6, fill: '#000', fontFamily: 'Arial' }, chwStatus),
           React.createElement('text', { x: 400, y: 300, textAnchor: 'middle', fontSize: 7, fill: '#333', fontWeight: 'bold', fontFamily: 'Arial' }, 'V-2'),
 
           // CHW valve % display
-          React.createElement('text', { x: 415, y: 165, textAnchor: 'middle', fontSize: 10, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, chwValvePct + ' %'),
+          React.createElement('text', { x: 415, y: 165, textAnchor: 'middle', fontSize: 10, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, chwValvePct.toFixed(1) + ' %'),
 
           // ══════════════════════════════════════════════════════════════════════
           // SETPOINTS (between coils)
@@ -208,7 +268,7 @@ const AHU23Graphic = (() => {
           // ══════════════════════════════════════════════════════════════════════
           // CFM panel
           React.createElement('rect', { x: 545, y: 75, width: 120, height: 35, fill: '#e8e8e8', stroke: '#888', strokeWidth: 1, rx: 3 }),
-          React.createElement('text', { x: 605, y: 97, textAnchor: 'middle', fontSize: 18, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, cfm + 'CFM'),
+          React.createElement('text', { x: 605, y: 97, textAnchor: 'middle', fontSize: 18, fill: '#000', fontWeight: 'bold', fontFamily: 'Arial' }, Math.round(cfm).toLocaleString() + ' CFM'),
           // AHU label
           React.createElement('text', { x: 605, y: 118, textAnchor: 'middle', fontSize: 8, fill: '#333', fontFamily: 'Arial' }, 'AHU-23-1'),
 

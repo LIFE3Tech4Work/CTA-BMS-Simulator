@@ -15,8 +15,9 @@
   // ─── Tab Definitions ────────────────────────────────────────────────────────
 
   const ZONE_TABS = [
-    { id: 'AHU-4-4', label: 'AHU-4-4', icon: '🌀', route: '#/symmetre/AHU-4-4', isZone: false },
-    { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
+    // { id: 'AHU-4-4', label: 'AHU-4-4', icon: '🌀', route: '#/symmetre/AHU-4-4', isZone: false },
+    // { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
+    { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW', icon: '🌀', route: '#/symmetre/AHU-4-4_NEW', isZone: false },
     { id: 'AHU-23-1', label: 'AHU-23-1', icon: '🌀', route: '#/symmetre/AHU-23-1', isZone: false }
   ];
 
@@ -75,7 +76,7 @@
 
   // ─── Honeywell-style OA Strip (blue theme, for AHU-23-1) ─────────────────────
 
-  function HoneywellOAStrip() {
+  function HoneywellOAStrip({ ahuId }) {
     const simContext = useContext(window.SimulationContext);
     const [weatherData, setWeatherData] = useState(null);
 
@@ -93,13 +94,28 @@
       return Number(value).toFixed(1);
     }
 
-    var items = [
-      { label: 'OA TEMPERATURE', value: weatherData ? fmt(weatherData.dryBulb) : '--.-', units: '°F' },
-      { label: 'OA RH', value: weatherData ? fmt(weatherData.relHumidity) : '--.-', units: '%RH' },
-      { label: 'OA ENTHALPY', value: weatherData ? fmt(weatherData.enthalpy) : '--.-', units: 'BTU' },
-      { label: 'CWS TEMPERATURE', value: weatherData ? fmt(weatherData.wetBulb) : '--.-', units: '°F' },
-      { label: 'OA WETBULB', value: weatherData ? fmt(weatherData.dewPoint) : '--.-', units: '°F' },
-    ];
+    // TecSystems style for AHU-4-4_NEW includes CHW/CW readings
+    var items;
+    if (ahuId === 'AHU-4-4_NEW') {
+      items = [
+        { label: 'OA TEMPERATURE', value: weatherData ? fmt(weatherData.dryBulb) : '--.-', units: '°F' },
+        { label: 'OA HUMIDITY', value: weatherData ? fmt(weatherData.relHumidity) : '--.-', units: '%RH' },
+        { label: 'OA DEWPOINT', value: weatherData ? fmt(weatherData.dewPoint) : '--.-', units: '°F' },
+        { label: 'OA WETBULB', value: weatherData ? fmt(weatherData.wetBulb) : '--.-', units: '°F' },
+        { label: 'OA ENTHALPY', value: weatherData ? fmt(weatherData.enthalpy) : '--.-', units: 'BTU' },
+        { label: 'CW SUPPLY', value: '75.2', units: '°F' },
+        { label: 'CHW SUPPLY', value: '41.8', units: '°F' },
+        { label: 'CHW FLOW', value: '1103', units: 'GPM' },
+      ];
+    } else {
+      items = [
+        { label: 'OA TEMPERATURE', value: weatherData ? fmt(weatherData.dryBulb) : '--.-', units: '°F' },
+        { label: 'OA RH', value: weatherData ? fmt(weatherData.relHumidity) : '--.-', units: '%RH' },
+        { label: 'OA ENTHALPY', value: weatherData ? fmt(weatherData.enthalpy) : '--.-', units: 'BTU' },
+        { label: 'CWS TEMPERATURE', value: weatherData ? fmt(weatherData.wetBulb) : '--.-', units: '°F' },
+        { label: 'OA WETBULB', value: weatherData ? fmt(weatherData.dewPoint) : '--.-', units: '°F' },
+      ];
+    }
 
     return React.createElement('div', {
       className: 'flex items-center justify-around px-4 py-1',
@@ -121,20 +137,22 @@
   // ─── Zone Tabs Component ────────────────────────────────────────────────────
 
   function ZoneTabs() {
-    var [activeTab, setActiveTab] = useState('AHU-4-4');
+    var [activeTab, setActiveTab] = useState('AHU-4-4_NEW');
 
     // Sync active tab from hash on mount and hash changes
     useEffect(function () {
       function syncFromHash() {
         var hash = window.location.hash || '';
-        if (hash.indexOf('AHU-23-1') !== -1) {
+        if (hash.indexOf('AHU-4-4_NEW') !== -1) {
+          setActiveTab('AHU-4-4_NEW');
+        } else if (hash.indexOf('AHU-23-1') !== -1) {
           setActiveTab('AHU-23-1');
         } else if (hash.indexOf('AHU-4-6') !== -1) {
           setActiveTab('AHU-4-6');
-        } else if (hash.indexOf('AHU-4-4') !== -1 || hash === '#/symmetre') {
+        } else if (hash.indexOf('AHU-4-4') !== -1) {
           setActiveTab('AHU-4-4');
-        } else if (hash === '#/symmetre' || hash === '#/symmetre/') {
-          setActiveTab('AHU-4-4');
+        } else {
+          setActiveTab('AHU-4-4_NEW');
         }
       }
 
@@ -186,9 +204,9 @@
         })
       ),
 
-      // Outside Air data strip (Honeywell blue style for AHU-23-1, standard for others)
-      activeTab === 'AHU-23-1'
-        ? React.createElement(HoneywellOAStrip, null)
+      // Outside Air data strip (Honeywell blue style for AHU-23-1 and AHU-4-4_NEW, standard for others)
+      (activeTab === 'AHU-23-1' || activeTab === 'AHU-4-4_NEW')
+        ? React.createElement(HoneywellOAStrip, { ahuId: activeTab })
         : React.createElement(OutsideAirStrip, null)
     );
   }
