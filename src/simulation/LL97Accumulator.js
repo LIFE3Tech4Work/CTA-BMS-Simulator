@@ -2,11 +2,36 @@
  * LL97Accumulator — Energy and emissions tracking for LL97 compliance.
  *
  * Tracks cumulative energy consumption and greenhouse gas emissions for the
- * Four Seasons Hotel as the simulation advances. Each simulated hour increments
- * accumulators based on LL84 annual constants divided by 8,760 hours, with a
- * seasonal adjustment factor derived from outdoor temperature.
+ * active building as the simulation advances. Each simulated hour increments
+ * accumulators based on that building's LL84 annual constants divided by
+ * 8,760 hours, with a seasonal adjustment factor derived from outdoor
+ * temperature.
  *
- * LL97 2024 compliance limit for hotels: 15.0 kgCO2e/sqft
+ * The active building defaults to window.LL84_CONSTANTS (the real, LL84-
+ * verified CTA Training Building) but can be switched to any profile in
+ * window.BuildingArchetypes via setActiveBuilding() — see
+ * building_archetypes.js for what those represent and why. Switching
+ * buildings resets accumulated totals: each building gets its own fresh
+ * annual accumulation, the same way a real LL97 report covers one building
+ * for one calendar year.
+ *
+ * LL97 carbon intensity limits are weighted by occupancy-group floor-area
+ * proportions (Hotel vs Multifamily Housing), computed live from whichever
+ * building is active — not a single flat number. Verified against multiple
+ * sources including nyc.gov directly:
+ *   - Multifamily Housing (R-2): 6.75 kgCO2e/sf (2024-2029), 3.35 kgCO2e/sf
+ *     (2030-2034) — confirmed against nyc.gov and independent sources.
+ *   - Hotel: 9.20 / 4.30 kgCO2e/sf — best available estimate; one
+ *     third-party source gives 9.50 for 2024 with no 2030 figure to
+ *     cross-check, and NYC DOB maintains two valid limit methodologies
+ *     (original Building Code occupancy groups vs. newer ESPM property
+ *     types, see nyc.gov/site/buildings/codes/REMOVE-greenhouse-gas-
+ *     emission-reporting.page) — worth confirming against the authoritative
+ *     DOB table before treating as final.
+ *   - Penalty rate: $268 per metric ton CO2e over the limit, confirmed
+ *     directly on nyc.gov.
+ *   - Mixed-use buildings: limit is a floor-area-weighted average across
+ *     occupancy groups — confirmed correct methodology.
  *
  * Attached to window.LL97Accumulator (no import/export — Babel standalone).
  */
@@ -19,11 +44,21 @@
   /** Hours in a year — used to derive hourly rates from annual totals */
   var HOURS_PER_YEAR = 8760;
 
-  /** LL97 2024 carbon intensity limit for hotels (kgCO2e/sqft) */
-  var LL97_LIMIT_2024_KGCO2_PER_SQFT = 15.0;
-
   /** Metric tons to kg conversion */
   var MT_TO_KG = 1000;
+
+  /** LL97 occupancy-group carbon intensity limits (kgCO2e/sqft) — see header for sourcing/confidence notes */
+  var HOTEL_LIMIT_2024_KGCO2_PER_SQFT = 9.20;
+  var HOTEL_LIMIT_2030_KGCO2_PER_SQFT = 4.30;
+  var MULTIFAMILY_LIMIT_2024_KGCO2_PER_SQFT = 6.75;
+  var MULTIFAMILY_LIMIT_2030_KGCO2_PER_SQFT = 3.35;
+
+  /** Fallback limits used only if the active building doesn't specify a Hotel/Multifamily floor-area split — the real anchor building's own weighted ratio, a reasonable default for a Manhattan mixed-use property */
+  var DEFAULT_LIMIT_2024_KGCO2_PER_SQFT = 7.58;
+  var DEFAULT_LIMIT_2030_KGCO2_PER_SQFT = 3.66;
+
+  /** LL97 penalty rate — $268 per metric ton CO2e over the limit, confirmed against nyc.gov */
+  var PENALTY_RATE_PER_MTCO2E = 268;
 
   // ─── Accumulator State ──────────────────────────────────────────────────────
 
@@ -32,14 +67,56 @@
   var steamEnergy_kBTU = 0;
   var ghgEmissions_mtCO2e = 0;
 
+  /** Active building: null = default (window.LL84_CONSTANTS, the real anchor building) */
+  var activeBuildingId = 'anchor';
+  var buildingOverride = null;
+
   // ─── Private Helpers ────────────────────────────────────────────────────────
 
   /**
-   * Get LL84 constants from the window global.
+   * Get LL84 constants from the window global (the real anchor building).
    * @returns {Object|null}
    */
   function getLL84Constants() {
     return window.LL84_CONSTANTS || window.LL84 || null;
+  }
+
+  /**
+   * Get the currently active building profile — either the explicit
+   * override set via setActiveBuilding(), or the default anchor building.
+   * @returns {Object|null}
+   */
+  function getActiveBuildingProfile() {
+    if (buildingOverride) return buildingOverride;
+    return getLL84Constants();
+  }
+
+  /**
+   * Compute the LL97 weighted carbon intensity limit for a building profile
+   * and compliance period, using floor-area-weighted occupancy-group rates.
+   * Falls back to a flat default if the profile doesn't specify a
+   * Hotel/Multifamily split.
+   * @param {Object} profile - Building profile (needs grossFloorArea_sqft,
+   *   hotelFloorArea_sqft, multifamilyFloorArea_sqft)
+   * @param {string} period - '2024' or '2030'
+   * @returns {number} kgCO2e/sqft
+   */
+  function computeWeightedLimit(profile, period) {
+    var defaultLimit = period === '2030' ? DEFAULT_LIMIT_2030_KGCO2_PER_SQFT : DEFAULT_LIMIT_2024_KGCO2_PER_SQFT;
+    if (!profile) return defaultLimit;
+
+    var hotelArea = profile.hotelFloorArea_sqft;
+    var mfArea = profile.multifamilyFloorArea_sqft;
+    var totalArea = profile.grossFloorArea_sqft;
+
+    if (!hotelArea || !mfArea || !totalArea) {
+      return defaultLimit;
+    }
+
+    var hotelRate = period === '2030' ? HOTEL_LIMIT_2030_KGCO2_PER_SQFT : HOTEL_LIMIT_2024_KGCO2_PER_SQFT;
+    var mfRate = period === '2030' ? MULTIFAMILY_LIMIT_2030_KGCO2_PER_SQFT : MULTIFAMILY_LIMIT_2024_KGCO2_PER_SQFT;
+
+    return (hotelRate * hotelArea + mfRate * mfArea) / totalArea;
   }
 
   /**
@@ -76,16 +153,77 @@
   // ─── Public API ─────────────────────────────────────────────────────────────
 
   /**
+   * Switch the active building. Resets accumulated totals — switching
+   * buildings starts a fresh annual accumulation, the same way a real LL97
+   * report covers one building for one calendar year; the previous
+   * building's accumulated GHG doesn't carry over.
+   * @param {string} buildingId - 'anchor' (or falsy) for the real default
+   *   building, or any key in window.BuildingArchetypes
+   */
+  function setActiveBuilding(buildingId) {
+    if (!buildingId || buildingId === 'anchor') {
+      buildingOverride = null;
+      activeBuildingId = 'anchor';
+      reset();
+      return;
+    }
+    if (window.BuildingArchetypes && window.BuildingArchetypes[buildingId]) {
+      buildingOverride = window.BuildingArchetypes[buildingId];
+      activeBuildingId = buildingId;
+      reset();
+      return;
+    }
+    console.warn('[LL97Accumulator] Unknown building ID "' + buildingId + '". Keeping current building.');
+  }
+
+  /**
+   * @returns {string} The currently active building's ID ('anchor' or an
+   *   archetype key)
+   */
+  function getActiveBuildingId() {
+    return activeBuildingId;
+  }
+
+  /**
+   * List all buildings available to switch to, for UI selectors.
+   * @returns {Array<{id: string, name: string, description: string, isSynthetic: boolean}>}
+   */
+  function getAvailableBuildings() {
+    var anchor = getLL84Constants();
+    var list = [{
+      id: 'anchor',
+      name: (anchor && anchor.propertyName) || 'CTA Training Building (Real LL84 Data)',
+      description: 'The real, LL84-verified building this simulator models — actual reported energy and emissions data.',
+      isSynthetic: false
+    }];
+
+    if (window.BuildingArchetypes) {
+      Object.keys(window.BuildingArchetypes).forEach(function (id) {
+        var profile = window.BuildingArchetypes[id];
+        list.push({
+          id: id,
+          name: profile.propertyName,
+          description: profile.archetypeDescription,
+          isSynthetic: true
+        });
+      });
+    }
+
+    return list;
+  }
+
+  /**
    * Increment accumulators by one simulated hour.
    *
-   * Uses LL84 annual totals divided by 8,760 to get base hourly rates,
-   * then applies a seasonal factor based on outdoor temperature.
+   * Uses the active building's LL84 annual totals divided by 8,760 to get
+   * base hourly rates, then applies a seasonal factor based on outdoor
+   * temperature.
    *
    * @param {Object} hourlyData - Contains at least { outdoorTemp } for seasonal adjustment
-   * @param {Object} [ll84Constants] - LL84 constants override (defaults to window.LL84_CONSTANTS)
+   * @param {Object} [ll84Constants] - LL84 constants override (defaults to the active building)
    */
   function tick(hourlyData, ll84Constants) {
-    var constants = ll84Constants || getLL84Constants();
+    var constants = ll84Constants || getActiveBuildingProfile();
     if (!constants) {
       console.warn('[LL97Accumulator] No LL84 constants available. Skipping tick.');
       return;
@@ -112,7 +250,7 @@
 
   /**
    * Reset all accumulators to zero.
-   * Called on simulation reset or scenario change.
+   * Called on simulation reset, scenario change, or building switch.
    */
   function reset() {
     totalEnergy_kBTU = 0;
@@ -135,24 +273,25 @@
   }
 
   /**
-   * Check LL97 2024 compliance status.
+   * Check LL97 compliance status for the active building, for both the
+   * 2024-2029 and 2030-2034 compliance periods, including penalty exposure.
    *
-   * Compares accumulated GHG emissions (extrapolated to annual) against
-   * the LL97 2024 limit (carbon intensity × floor area).
+   * Compares accumulated GHG emissions against each period's limit
+   * (weighted carbon intensity × floor area).
    *
    * @returns {Object} {
-   *   compliant: boolean,
-   *   currentIntensity_kgCO2PerSqft: number,
-   *   limit_kgCO2PerSqft: number,
-   *   annualProjected_mtCO2e: number,
-   *   annualLimit_mtCO2e: number,
-   *   grossFloorArea_sqft: number,
-   *   percentOfLimit: number
+   *   buildingId, buildingName,
+   *   compliant, currentIntensity_kgCO2PerSqft, limit_kgCO2PerSqft,
+   *   annualProjected_mtCO2e, annualLimit_mtCO2e, grossFloorArea_sqft,
+   *   percentOfLimit, penaltyExposure2024_usd,
+   *   compliant2030, limit2030_kgCO2PerSqft, annualLimit2030_mtCO2e,
+   *   percentOfLimit2030, penaltyExposure2030_usd
    * }
    */
   function getComplianceStatus() {
-    var constants = getLL84Constants();
+    var constants = getActiveBuildingProfile();
     var grossFloorArea = (constants && constants.grossFloorArea_sqft) || 0;
+    var buildingName = (constants && constants.propertyName) || 'Unknown Building';
 
     // Convert accumulated mtCO2e to kgCO2e, then to intensity
     var accumulated_kgCO2e = ghgEmissions_mtCO2e * MT_TO_KG;
@@ -160,11 +299,13 @@
       ? accumulated_kgCO2e / grossFloorArea
       : 0;
 
-    // Annual limit in mtCO2e
-    var annualLimit_mtCO2e = (LL97_LIMIT_2024_KGCO2_PER_SQFT * grossFloorArea) / MT_TO_KG;
+    var limit2024 = computeWeightedLimit(constants, '2024');
+    var limit2030 = computeWeightedLimit(constants, '2030');
+
+    var annualLimit_mtCO2e = (limit2024 * grossFloorArea) / MT_TO_KG;
+    var annualLimit2030_mtCO2e = (limit2030 * grossFloorArea) / MT_TO_KG;
 
     // Projected annual GHG based on current accumulation rate
-    // If we have some hours accumulated, extrapolate
     var annualProjected = constants && constants.annualGHG_mtCO2e
       ? constants.annualGHG_mtCO2e
       : ghgEmissions_mtCO2e; // fallback to accumulated if no constants
@@ -172,15 +313,45 @@
     var percentOfLimit = annualLimit_mtCO2e > 0
       ? (ghgEmissions_mtCO2e / annualLimit_mtCO2e) * 100
       : 0;
+    var percentOfLimit2030 = annualLimit2030_mtCO2e > 0
+      ? (ghgEmissions_mtCO2e / annualLimit2030_mtCO2e) * 100
+      : 0;
+
+    // Penalty exposure: projected annual excess × $268/tCO2e, using the
+    // building's actual annual reported/projected GHG (not just whatever
+    // has accumulated so far this session) — this is what a real LL97
+    // report would compare against each limit.
+    var projectedExcess2024_mtCO2e = Math.max(0, annualProjected - annualLimit_mtCO2e);
+    var projectedExcess2030_mtCO2e = Math.max(0, annualProjected - annualLimit2030_mtCO2e);
+    var penaltyExposure2024_usd = projectedExcess2024_mtCO2e * PENALTY_RATE_PER_MTCO2E;
+    var penaltyExposure2030_usd = projectedExcess2030_mtCO2e * PENALTY_RATE_PER_MTCO2E;
 
     return {
-      compliant: ghgEmissions_mtCO2e <= annualLimit_mtCO2e,
+      buildingId: activeBuildingId,
+      buildingName: buildingName,
+
+      // 2024-2029 period. "compliant" reflects whether the building's full
+      // ANNUAL projected GHG is within the limit (same basis as
+      // penaltyExposure) — not whether the GHG accumulated so far in a
+      // live, partway-through-the-year simulation happens to be under a
+      // full-year limit, which would be trivially true almost always.
+      // percentOfLimit is the separate, live "how much of this year's
+      // carbon budget has the simulation used so far" progress indicator.
+      compliant: annualProjected <= annualLimit_mtCO2e,
       currentIntensity_kgCO2PerSqft: currentIntensity,
-      limit_kgCO2PerSqft: LL97_LIMIT_2024_KGCO2_PER_SQFT,
+      limit_kgCO2PerSqft: limit2024,
       annualProjected_mtCO2e: annualProjected,
       annualLimit_mtCO2e: annualLimit_mtCO2e,
       grossFloorArea_sqft: grossFloorArea,
-      percentOfLimit: percentOfLimit
+      percentOfLimit: percentOfLimit,
+      penaltyExposure2024_usd: penaltyExposure2024_usd,
+
+      // 2030-2034 period
+      compliant2030: annualProjected <= annualLimit2030_mtCO2e,
+      limit2030_kgCO2PerSqft: limit2030,
+      annualLimit2030_mtCO2e: annualLimit2030_mtCO2e,
+      percentOfLimit2030: percentOfLimit2030,
+      penaltyExposure2030_usd: penaltyExposure2030_usd
     };
   }
 
@@ -198,12 +369,20 @@
     reset: reset,
     getValues: getValues,
     getComplianceStatus: getComplianceStatus,
+    setActiveBuilding: setActiveBuilding,
+    getActiveBuildingId: getActiveBuildingId,
+    getAvailableBuildings: getAvailableBuildings,
 
-    // Constants (exposed for testing)
+    // Constants (exposed for testing / display)
     HOURS_PER_YEAR: HOURS_PER_YEAR,
-    LL97_LIMIT_2024_KGCO2_PER_SQFT: LL97_LIMIT_2024_KGCO2_PER_SQFT,
+    HOTEL_LIMIT_2024_KGCO2_PER_SQFT: HOTEL_LIMIT_2024_KGCO2_PER_SQFT,
+    HOTEL_LIMIT_2030_KGCO2_PER_SQFT: HOTEL_LIMIT_2030_KGCO2_PER_SQFT,
+    MULTIFAMILY_LIMIT_2024_KGCO2_PER_SQFT: MULTIFAMILY_LIMIT_2024_KGCO2_PER_SQFT,
+    MULTIFAMILY_LIMIT_2030_KGCO2_PER_SQFT: MULTIFAMILY_LIMIT_2030_KGCO2_PER_SQFT,
+    PENALTY_RATE_PER_MTCO2E: PENALTY_RATE_PER_MTCO2E,
 
-    // Testing helper — expose seasonal factor for unit tests
-    _getSeasonalFactor: getSeasonalFactor
+    // Testing helpers
+    _getSeasonalFactor: getSeasonalFactor,
+    _computeWeightedLimit: computeWeightedLimit
   };
 })();

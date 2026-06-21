@@ -91,6 +91,8 @@
   <script type="text/babel" src="ui/symmetre/AHUImageOverlay.jsx"></script>
   <script type="text/babel" src="ui/symmetre/AHU44NewImageOverlay.jsx"></script>
   <script type="text/babel" src="ui/symmetre/AHU44NewControlsSidebar.jsx"></script>
+  <script type="text/babel" src="ui/symmetre/VAVControlsSidebar.jsx"></script>
+  <script type="text/babel" src="ui/symmetre/VAVGraphic.jsx"></script>
   <script type="text/babel" src="ui/symmetre/AHU23Graphic.jsx"></script>
   <script type="text/babel" src="ui/symmetre/AHU23ControlsSidebar.jsx"></script>
   <script type="text/babel" src="ui/symmetre/SimultaneousHeatCool.jsx"></script>
@@ -126,6 +128,9 @@
   <script src="simulation/LL97Accumulator.js"></script>
   <script src="simulation/AHU23Controller.js"></script>
   <script src="simulation/AHU44NewController.js"></script>
+  <script src="simulation/AHU44NewFaultEngine.js"></script>
+  <script src="simulation/VAVController.js"></script>
+  <script src="simulation/VAVFaultEngine.js"></script>
 
   <!-- Reference data (scenarios, slides, chapters) — must load before mode components -->
   <script type="module">
@@ -133,12 +138,14 @@
     import { CompanionSlides } from './data/reference/companionSlides.js';
     import { Chapters } from './data/reference/chapters.js';
     import { LL84 } from './data/building/ll84_constants.js';
+    import { BuildingArchetypes } from './data/building/building_archetypes.js';
     window.SCENARIOS = Scenarios;
     window.Scenarios = Scenarios;
     window.COMPANION_SLIDES = CompanionSlides;
     window.CHAPTERS = Chapters;
     window.LL84_CONSTANTS = LL84;
     window.LL84 = LL84;
+    window.BuildingArchetypes = BuildingArchetypes;
   </script>
 
   <!-- Load POINT_CATALOG + TMY3 weather data, initialize PointRegistry, wire SimulationEngine -->

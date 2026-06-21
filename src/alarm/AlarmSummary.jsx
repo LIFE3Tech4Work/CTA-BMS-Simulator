@@ -130,8 +130,8 @@
       source: 'AI401@DEV4004',
       condition: 'F-06',
       priority: 'urgent',
-      description: 'CO2 exceeds ventilation threshold (>800 ppm)',
-      value: 872,
+      description: 'CO2 exceeds ventilation threshold (>1,100 ppm)',
+      value: 1180,
       lifecycle: 'active',
       acknowledged: false,
       operator: '',
@@ -158,8 +158,11 @@
 
   var TREE_NODES = [
     { id: 'all', label: 'All Alarms', parent: null },
-    { id: 'AHU-4-4', label: 'AHU-4-4', parent: 'all' },
+    { id: 'AHU-4-4', label: 'AHU-4-4 (legacy, no graphic)', parent: 'all' },
+    { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW', parent: 'all' },
     { id: 'AHU-4-6', label: 'AHU-4-6', parent: 'all' },
+    { id: 'VAV-4-4-01', label: 'VAV-4-4-01 (Pre-Function)', parent: 'all' },
+    { id: 'VAV-4-4-02', label: 'VAV-4-4-02 (Ballroom)', parent: 'all' },
     { id: 'Outdoor', label: 'Outdoor', parent: 'all' }
   ];
 
@@ -460,6 +463,27 @@
         if (window.FaultEngine && typeof window.FaultEngine.getAllAlarms === 'function') {
           var engineAlarms = window.FaultEngine.getAllAlarms();
 
+          // AHU-4-4_NEW alarms come from a separate engine (its own
+          // formula-driven state isn't part of PointRegistry) — merge them
+          // in here so one Alarm Summary screen covers both. Each alarm
+          // already carries an explicit `subsystem` field, so no source-
+          // address parsing is needed for these.
+          if (window.AHU44NewFaultEngine && typeof window.AHU44NewFaultEngine.getAllAlarms === 'function') {
+            engineAlarms = engineAlarms.concat(window.AHU44NewFaultEngine.getAllAlarms());
+          }
+
+          // VAV-4-4-01/02 alarms come from a third engine, one zone at a
+          // time (VAVFaultEngine is multi-instance, keyed by zoneId — see
+          // VAVController.js for why two zones share one module). Each
+          // alarm already carries subsystem = zoneId.
+          if (window.VAVFaultEngine && window.VAVController &&
+              typeof window.VAVFaultEngine.getAllAlarms === 'function' &&
+              typeof window.VAVController.getZoneIds === 'function') {
+            window.VAVController.getZoneIds().forEach(function (zoneId) {
+              engineAlarms = engineAlarms.concat(window.VAVFaultEngine.getAllAlarms(zoneId));
+            });
+          }
+
           setAlarms(function (currentAlarms) {
             // Build a map of current acknowledged/operator/action states to preserve them
             var ackMap = {};
@@ -507,7 +531,19 @@
                 }
               }
             }
-            return merged;
+            // Per the SymmetrE Operator Manual's alarm-icon legend, only 3
+            // lifecycle×ack combinations are ever shown: active+unack,
+            // inactive+unack, and active+ack. There is no inactive+ack icon —
+            // once an alarm both clears AND is acknowledged, real Station
+            // drops it from the Alarm Summary (it remains in Event history,
+            // which this simulator doesn't separately model). The engines
+            // keep full history via getAllAlarms() for Property 21 testing;
+            // this filter only governs what the visible Summary displays.
+            return merged.filter(function (a) {
+              if (a.priority === 'journal') return false;
+              if (a.lifecycle === 'inactive' && a.acknowledged) return false;
+              return true;
+            });
           });
         }
       }
@@ -580,8 +616,18 @@
         });
       });
 
-      // Also acknowledge in the FaultEngine if applicable
-      if (window.FaultEngine && typeof window.FaultEngine.acknowledge === 'function') {
+      // Also acknowledge in the originating engine, if applicable.
+      // AHU-4-4_NEW and the two VAV zones each live in their own engine,
+      // separate from everything else.
+      if (alarm.subsystem === 'AHU-4-4_NEW') {
+        if (window.AHU44NewFaultEngine && typeof window.AHU44NewFaultEngine.acknowledge === 'function') {
+          window.AHU44NewFaultEngine.acknowledge(alarm.condition, auth.operator || 'operator');
+        }
+      } else if (alarm.subsystem === 'VAV-4-4-01' || alarm.subsystem === 'VAV-4-4-02') {
+        if (window.VAVFaultEngine && typeof window.VAVFaultEngine.acknowledge === 'function') {
+          window.VAVFaultEngine.acknowledge(alarm.subsystem, alarm.condition, auth.operator || 'operator');
+        }
+      } else if (window.FaultEngine && typeof window.FaultEngine.acknowledge === 'function') {
         window.FaultEngine.acknowledge(alarm.condition, auth.operator || 'operator');
       }
     }, [auth]);

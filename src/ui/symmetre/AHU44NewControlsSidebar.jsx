@@ -214,7 +214,7 @@ const AHU44NewControlsSidebar = (() => {
 
       // ECONOMIZER CONTROL
       React.createElement(SectionHeader, { title: 'Economizer Control' }),
-      React.createElement(EditableRow, { label: 'Unit Outside Air Temp', stateKey: 'oaTemperature', units: '°F', min: -10, max: 120, step: 0.5 }),
+      React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Temp', stateKey: 'oaTemperature', units: '°F', format: function(v) { return (typeof v === 'number' ? v.toFixed(1) : '--') + ' (live)'; } }),
       React.createElement(ToggleRow, { label: 'Low OA Temp Lockout', stateKey: 'lowOATLockout' }),
       React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Enthalpy', stateKey: 'oaEnthalpy', units: 'BTU' }),
       React.createElement(ToggleRow, { label: 'Enthalpy OK For Economizer', stateKey: 'enthalpyOKForEconomizer' }),
@@ -233,7 +233,9 @@ const AHU44NewControlsSidebar = (() => {
       React.createElement(EditableRow, { label: 'Fan Speed Setpoint', stateKey: 'fanSpeedSetpoint', units: '%', min: 0, max: 100 }),
       React.createElement(ReadOnlyRow, { label: 'Return Fan Track Mode', stateKey: 'fanTrackMode', units: '' }),
 
-      // CALCULATED OUTPUTS (read-only)
+      // CALCULATED OUTPUTS (mostly read-only — OA Damper Position can be
+      // manually overridden, same as a real BACnet AO going Manual; see
+      // the Manual-output note in AHU44NewController.js's file header)
       React.createElement(SectionHeader, { title: 'Calculated Outputs' }),
       React.createElement(ReadOnlyRow, { label: 'Fan Status', stateKey: 'fanRunning', units: '',
         format: function(v) { return v ? '● RUNNING' : '○ STOPPED'; } }),
@@ -241,7 +243,7 @@ const AHU44NewControlsSidebar = (() => {
         format: function(v) { return Math.round(v).toLocaleString(); } }),
       React.createElement(ReadOnlyRow, { label: 'OA CFM', stateKey: 'oaCFM', units: 'CFM',
         format: function(v) { return Math.round(v).toLocaleString(); } }),
-      React.createElement(ReadOnlyRow, { label: 'OA Damper Position', stateKey: 'oaDamperPosition', units: '%' }),
+      React.createElement(EditableRow, { label: 'OA Damper Position', stateKey: 'oaDamperPosition', units: '%', min: 0, max: 100 }),
       React.createElement(ReadOnlyRow, { label: 'Economizer Active', stateKey: 'economizerActive', units: '',
         format: function(v) { return v ? 'YES' : 'NO'; } }),
       React.createElement(ReadOnlyRow, { label: 'CHW Valve', stateKey: 'chwValvePosition', units: '%' }),

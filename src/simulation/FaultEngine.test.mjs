@@ -47,10 +47,10 @@ describe('FaultEngine', () => {
   });
 
   describe('evaluate — alarm generation (Property 20)', () => {
-    it('generates alarm when F-01 condition is met (PHT>20 AND CHW>20)', () => {
+    it('generates alarm when F-01 condition is met (PHT>20 AND CHW>20 on AHU-4-6)', () => {
       const values = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30]
       ]);
 
       const newAlarms = engine.evaluate(values);
@@ -60,13 +60,13 @@ describe('FaultEngine', () => {
       expect(newAlarms[0].priority).toBe('urgent');
       expect(newAlarms[0].lifecycle).toBe('active');
       expect(newAlarms[0].acknowledged).toBe(false);
-      expect(newAlarms[0].source).toBe('AO_PHT@DEV4004');
+      expect(newAlarms[0].source).toBe('AO103@DEV4006');
       expect(newAlarms[0].description).toBe('Simultaneous heating and cooling');
     });
 
     it('generates alarm with correct shape', () => {
       const values = new Map([
-        ['AI_CO2@DEV4004', 900]
+        ['AI401@DEV4004', 1200]
       ]);
 
       const newAlarms = engine.evaluate(values);
@@ -75,11 +75,11 @@ describe('FaultEngine', () => {
       expect(alarm).toBeDefined();
       expect(alarm.id).toMatch(/^F-06_/);
       expect(alarm.timestamp).toBeInstanceOf(Date);
-      expect(alarm.source).toBe('AI_CO2@DEV4004');
+      expect(alarm.source).toBe('AI401@DEV4004');
       expect(alarm.condition).toBe('F-06');
       expect(alarm.priority).toBe('urgent');
-      expect(alarm.description).toBe('CO2 exceeds ventilation threshold');
-      expect(alarm.value).toBe(900);
+      expect(alarm.description).toBe('CO2 exceeds ventilation threshold (>1,100 ppm, ASHRAE 62.1 upper guideline)');
+      expect(alarm.value).toBe(1200);
       expect(alarm.lifecycle).toBe('active');
       expect(alarm.acknowledged).toBe(false);
       expect(alarm.operator).toBe('');
@@ -88,8 +88,8 @@ describe('FaultEngine', () => {
 
     it('does NOT generate duplicate alarm for same rule (Property 20)', () => {
       const values = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30]
       ]);
 
       const first = engine.evaluate(values);
@@ -102,9 +102,9 @@ describe('FaultEngine', () => {
 
     it('generates alarms for multiple rules simultaneously', () => {
       const values = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30],
-        ['AI_CO2@DEV4004', 900]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30],
+        ['AI401@DEV4004', 1200]
       ]);
 
       const newAlarms = engine.evaluate(values);
@@ -119,7 +119,7 @@ describe('FaultEngine', () => {
     it('transitions alarm to inactive when condition clears', () => {
       // First, trigger the alarm
       const triggerValues = new Map([
-        ['AI_CO2@DEV4004', 900]
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(triggerValues);
 
@@ -128,7 +128,7 @@ describe('FaultEngine', () => {
 
       // Now clear the condition
       const clearValues = new Map([
-        ['AI_CO2@DEV4004', 700]
+        ['AI401@DEV4004', 700]
       ]);
       engine.evaluate(clearValues);
 
@@ -144,13 +144,13 @@ describe('FaultEngine', () => {
 
     it('preserves acknowledged=false when clearing (Property 21)', () => {
       const triggerValues = new Map([
-        ['AI_CO2@DEV4004', 900]
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(triggerValues);
 
       // Clear without acknowledging
       const clearValues = new Map([
-        ['AI_CO2@DEV4004', 700]
+        ['AI401@DEV4004', 700]
       ]);
       engine.evaluate(clearValues);
 
@@ -161,7 +161,7 @@ describe('FaultEngine', () => {
 
     it('preserves acknowledged=true when clearing (Property 21)', () => {
       const triggerValues = new Map([
-        ['AI_CO2@DEV4004', 900]
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(triggerValues);
 
@@ -170,7 +170,7 @@ describe('FaultEngine', () => {
 
       // Clear the condition
       const clearValues = new Map([
-        ['AI_CO2@DEV4004', 700]
+        ['AI401@DEV4004', 700]
       ]);
       engine.evaluate(clearValues);
 
@@ -186,9 +186,9 @@ describe('FaultEngine', () => {
     it('returns only alarms with lifecycle=active', () => {
       // Trigger F-01 and F-06
       const values = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30],
-        ['AI_CO2@DEV4004', 900]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30],
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(values);
 
@@ -196,9 +196,9 @@ describe('FaultEngine', () => {
 
       // Clear F-06
       const clearValues = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30],
-        ['AI_CO2@DEV4004', 700]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30],
+        ['AI401@DEV4004', 700]
       ]);
       engine.evaluate(clearValues);
 
@@ -211,7 +211,7 @@ describe('FaultEngine', () => {
   describe('acknowledge', () => {
     it('marks alarm as acknowledged with operator name', () => {
       const values = new Map([
-        ['AI_CO2@DEV4004', 900]
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(values);
 
@@ -232,9 +232,9 @@ describe('FaultEngine', () => {
   describe('reset', () => {
     it('clears all alarms', () => {
       const values = new Map([
-        ['AO_PHT@DEV4004', 25],
-        ['AO_CHW@DEV4004', 30],
-        ['AI_CO2@DEV4004', 900]
+        ['AO103@DEV4006', 25],
+        ['AO102@DEV4006', 30],
+        ['AI401@DEV4004', 1200]
       ]);
       engine.evaluate(values);
       expect(engine.getActiveAlarms().length).toBeGreaterThan(0);
@@ -246,91 +246,114 @@ describe('FaultEngine', () => {
   });
 
   describe('Fault rule conditions', () => {
-    it('F-01: triggers only when BOTH PHT>20 AND CHW>20', () => {
+    it('F-01: triggers only when BOTH AHU-4-6 PHT>20 AND CHW>20', () => {
       // Only PHT high — should not trigger
-      expect(engine.evaluate(new Map([['AO_PHT@DEV4004', 25], ['AO_CHW@DEV4004', 10]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO103@DEV4006', 25], ['AO102@DEV4006', 10]]))).toHaveLength(0);
       engine._reset();
 
       // Only CHW high — should not trigger
-      expect(engine.evaluate(new Map([['AO_PHT@DEV4004', 10], ['AO_CHW@DEV4004', 25]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO103@DEV4006', 10], ['AO102@DEV4006', 25]]))).toHaveLength(0);
       engine._reset();
 
       // Both at exactly 20 — should not trigger (>20 required)
-      expect(engine.evaluate(new Map([['AO_PHT@DEV4004', 20], ['AO_CHW@DEV4004', 20]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO103@DEV4006', 20], ['AO102@DEV4006', 20]]))).toHaveLength(0);
       engine._reset();
 
       // Both above 20 — should trigger
-      const alarms = engine.evaluate(new Map([['AO_PHT@DEV4004', 21], ['AO_CHW@DEV4004', 21]]));
+      const alarms = engine.evaluate(new Map([['AO103@DEV4006', 21], ['AO102@DEV4006', 21]]));
       expect(alarms.find(a => a.condition === 'F-01')).toBeDefined();
     });
 
-    it('F-02: triggers when |SAT - SAT_SP| > 5', () => {
-      // Within tolerance
-      expect(engine.evaluate(new Map([['AI_SAT@DEV4004', 72], ['AO_SAT_SP@DEV4004', 70]]))).toHaveLength(0);
+    it('F-02: triggers when AHU-4-4 SAT is outside the 52-58°F design band', () => {
+      // Within design band
+      expect(engine.evaluate(new Map([['AI301@DEV4004', 55]]))).toHaveLength(0);
       engine._reset();
 
-      // Exactly 5 — should not trigger
-      expect(engine.evaluate(new Map([['AI_SAT@DEV4004', 75], ['AO_SAT_SP@DEV4004', 70]]))).toHaveLength(0);
+      // At the boundary — should not trigger
+      expect(engine.evaluate(new Map([['AI301@DEV4004', 52]]))).toHaveLength(0);
+      engine._reset();
+      expect(engine.evaluate(new Map([['AI301@DEV4004', 58]]))).toHaveLength(0);
       engine._reset();
 
-      // Over 5 — should trigger
-      const alarms = engine.evaluate(new Map([['AI_SAT@DEV4004', 76], ['AO_SAT_SP@DEV4004', 70]]));
-      expect(alarms.find(a => a.condition === 'F-02')).toBeDefined();
+      // Below band — should trigger
+      const lowAlarms = engine.evaluate(new Map([['AI301@DEV4004', 49]]));
+      expect(lowAlarms.find(a => a.condition === 'F-02')).toBeDefined();
+      engine._reset();
+
+      // Above band — should trigger
+      const highAlarms = engine.evaluate(new Map([['AI301@DEV4004', 62]]));
+      expect(highAlarms.find(a => a.condition === 'F-02')).toBeDefined();
     });
 
-    it('F-03: triggers when Fan ON and Schedule OFF', () => {
-      // Fan off — no trigger
-      expect(engine.evaluate(new Map([['BI_FAN@DEV4004', 0], ['BI_OCC@DEV4004', 0]]))).toHaveLength(0);
+    it('F-03: triggers when fan speed > 0 and Run Schedule is OFF', () => {
+      // Fan off, schedule off — no trigger
+      expect(engine.evaluate(new Map([['AO101@DEV4004', 0], ['BI601@DEV4004', 0]]))).toHaveLength(0);
       engine._reset();
 
       // Fan on, schedule on — no trigger
-      expect(engine.evaluate(new Map([['BI_FAN@DEV4004', 1], ['BI_OCC@DEV4004', 1]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO101@DEV4004', 40], ['BI601@DEV4004', 1]]))).toHaveLength(0);
       engine._reset();
 
       // Fan on, schedule off — should trigger
-      const alarms = engine.evaluate(new Map([['BI_FAN@DEV4004', 1], ['BI_OCC@DEV4004', 0]]));
+      const alarms = engine.evaluate(new Map([['AO101@DEV4004', 40], ['BI601@DEV4004', 0]]));
       expect(alarms.find(a => a.condition === 'F-03')).toBeDefined();
     });
 
-    it('F-04: triggers when OAD<5 and Schedule ON', () => {
+    it('F-04: triggers when AHU-4-4 OA damper<5 and Run Schedule ON', () => {
       // OAD high — no trigger
-      expect(engine.evaluate(new Map([['AO_OAD@DEV4004', 50], ['BI_OCC@DEV4004', 1]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO104@DEV4004', 50], ['BI601@DEV4004', 1]]))).toHaveLength(0);
       engine._reset();
 
       // OAD low but schedule off — no trigger
-      expect(engine.evaluate(new Map([['AO_OAD@DEV4004', 3], ['BI_OCC@DEV4004', 0]]))).toHaveLength(0);
+      expect(engine.evaluate(new Map([['AO104@DEV4004', 3], ['BI601@DEV4004', 0]]))).toHaveLength(0);
       engine._reset();
 
       // OAD<5 and schedule ON — should trigger
-      const alarms = engine.evaluate(new Map([['AO_OAD@DEV4004', 3], ['BI_OCC@DEV4004', 1]]));
+      const alarms = engine.evaluate(new Map([['AO104@DEV4004', 3], ['BI601@DEV4004', 1]]));
       expect(alarms.find(a => a.condition === 'F-04')).toBeDefined();
     });
 
-    it('F-05: triggers when OAT<55 AND OAD<50 AND CHW>20', () => {
+    it('F-05: triggers when CT-02 is ON, OAT<55, and OA damper<80', () => {
       // All conditions met
       const alarms = engine.evaluate(new Map([
-        ['AI_OAT@DEV5000', 50],
-        ['AO_OAD@DEV4004', 40],
-        ['AO_CHW@DEV4004', 30]
+        ['BI801@DEV6000', 1],
+        ['AI701@DEV5000', 50],
+        ['AO104@DEV4004', 40]
       ]));
       expect(alarms.find(a => a.condition === 'F-05')).toBeDefined();
       engine._reset();
 
       // OAT too high — no trigger
       expect(engine.evaluate(new Map([
-        ['AI_OAT@DEV5000', 60],
-        ['AO_OAD@DEV4004', 40],
-        ['AO_CHW@DEV4004', 30]
+        ['BI801@DEV6000', 1],
+        ['AI701@DEV5000', 60],
+        ['AO104@DEV4004', 40]
+      ])).filter(a => a.condition === 'F-05')).toHaveLength(0);
+      engine._reset();
+
+      // CT off — no trigger
+      expect(engine.evaluate(new Map([
+        ['BI801@DEV6000', 0],
+        ['AI701@DEV5000', 50],
+        ['AO104@DEV4004', 40]
+      ])).filter(a => a.condition === 'F-05')).toHaveLength(0);
+      engine._reset();
+
+      // OA damper already wide open — economizer is doing its job, no trigger
+      expect(engine.evaluate(new Map([
+        ['BI801@DEV6000', 1],
+        ['AI701@DEV5000', 50],
+        ['AO104@DEV4004', 90]
       ])).filter(a => a.condition === 'F-05')).toHaveLength(0);
     });
 
-    it('F-06: triggers when CO2>800', () => {
-      // Exactly 800 — should not trigger
-      expect(engine.evaluate(new Map([['AI_CO2@DEV4004', 800]]))).toHaveLength(0);
+    it('F-06: triggers when AHU-4-4 CO2>1100', () => {
+      // Exactly 1100 — should not trigger
+      expect(engine.evaluate(new Map([['AI401@DEV4004', 1100]]))).toHaveLength(0);
       engine._reset();
 
-      // Above 800 — should trigger
-      const alarms = engine.evaluate(new Map([['AI_CO2@DEV4004', 801]]));
+      // Above 1100 — should trigger
+      const alarms = engine.evaluate(new Map([['AI401@DEV4004', 1101]]));
       expect(alarms.find(a => a.condition === 'F-06')).toBeDefined();
     });
   });

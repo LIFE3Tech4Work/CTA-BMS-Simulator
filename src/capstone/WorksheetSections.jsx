@@ -36,18 +36,21 @@
     {
       id: 2,
       title: 'BMS Data Analysis',
-      prompt: 'Analyze the BMS trend data for AHU-4-4 and AHU-4-6. Identify patterns in ' +
-        'supply air temperature, fan speed, damper positions, and zone conditions. ' +
-        'Reference specific data points and time periods observed in the simulator. ' +
-        'Note any anomalies or areas requiring further investigation.'
+      prompt: 'Analyze the BMS trend data for AHU-4-4 and AHU-4-6, and the VAV-4-4-01/' +
+        'VAV-4-4-02 terminal units they serve. Identify patterns in ' +
+        'supply air temperature, fan speed, damper positions, reheat valve operation, ' +
+        'and zone conditions. Reference specific data points and time periods observed ' +
+        'in the simulator. Note any anomalies or areas requiring further investigation.'
     },
     {
       id: 3,
       title: 'Fault Detection & Diagnosis',
-      prompt: 'Document any faults or abnormal conditions detected through your analysis. ' +
-        'For each fault, describe: the condition observed, the affected equipment, ' +
-        'potential root causes, and the impact on building performance and occupant comfort. ' +
-        'Reference ASHRAE standards where applicable.'
+      prompt: 'Document any faults or abnormal conditions detected through your analysis, ' +
+        'at both the AHU and VAV level (e.g., excessive reheat — discharge air already ' +
+        'cooled to design temperature being reheated at the VAV box). For each fault, ' +
+        'describe: the condition observed, the affected equipment, potential root causes, ' +
+        'and the impact on building performance and occupant comfort. Reference ASHRAE ' +
+        'standards where applicable.'
     },
     {
       id: 4,

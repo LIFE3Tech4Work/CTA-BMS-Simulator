@@ -50,7 +50,16 @@ function parseRoute(hash) {
   const parts = cleaned.split('/');
 
   if (parts[0] === 'symmetre') {
-    return { screen: 'symmetre', params: { ahuId: parts[1] || 'AHU-4-4_NEW' } };
+    var ahuId = parts[1] || 'AHU-4-4_NEW';
+    // AHU-4-4 is deprecated — redirect any stale link, bookmark, or direct
+    // URL to the supported AHU-4-4_NEW view rather than resolving to the old
+    // data-driven component. AHU-4-6 is a separate AHU, not part of this
+    // deprecation, and is intentionally left untouched (its tab is currently
+    // commented out in ZoneTabs.jsx — a pre-existing state, not changed here).
+    if (ahuId === 'AHU-4-4') {
+      ahuId = 'AHU-4-4_NEW';
+    }
+    return { screen: 'symmetre', params: { ahuId: ahuId } };
   }
   if (parts[0] === 'ebi') {
     return { screen: 'ebi', params: { pointId: decodeURIComponent(parts[1] || ''), tab: parts[2] || 'general' } };
@@ -114,8 +123,10 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHU44NewControlsSidebar, null)
               : (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
               ? React.createElement(window.AHU23ControlsSidebar, null)
+              : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVControlsSidebar)
+              ? React.createElement(window.VAVControlsSidebar, { zoneId: params.ahuId })
               : (window.ControlsSidebar
-                ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
+                ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
                 : null),
             // LL97 Panel at bottom of sidebar (scrolls with it)
             window.LL97Panel
@@ -128,14 +139,16 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHU44NewImageOverlay, null)
               : (params.ahuId === 'AHU-23-1' && window.AHUImageOverlay)
               ? React.createElement(window.AHUImageOverlay, { ahuId: 'AHU-23-1' })
+              : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVGraphic)
+              ? React.createElement(window.VAVGraphic, { zoneId: params.ahuId })
               : (window.AHUGraphic
-                ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4' })
+                ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
                 : React.createElement('div', { className: 'text-center' },
                     React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
-                    React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
+                    React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
                   )),
-            window.SimultaneousHeatCool
-              ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4' })
+            (window.SimultaneousHeatCool && params.ahuId !== 'VAV-4-4-01' && params.ahuId !== 'VAV-4-4-02')
+              ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
               : null
           )
         )
@@ -145,7 +158,7 @@ function SymmetreScreen({ params }) {
     bmsContent = React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-800 text-white' },
       React.createElement('div', { className: 'text-center' },
         React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
-        React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
+        React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
       )
     );
   }
@@ -408,6 +421,85 @@ function App() {
   window.setSimulationState = setSimulationState;
   window.setPointRegistryState = setPointRegistryState;
   window.setAlarmState = setAlarmState;
+
+  // ─── Master tick driver ──────────────────────────────────────────────────
+  // Connects SimulationEngine's clock to PointRegistry interpolation and
+  // FaultEngine evaluation. Without this, the simulation clock advances but
+  // point values never progress through the dataset and faults never fire.
+  useEffect(function () {
+    function handleTick(event) {
+      // Advance every point's interpolated value to match the current row
+      if (window.PointRegistry && typeof window.PointRegistry.interpolate === 'function') {
+        window.PointRegistry.interpolate(event.rowIndex, event.interpolationFraction);
+      }
+
+      // Evaluate fault rules against the freshly interpolated values
+      if (window.FaultEngine && window.PointRegistry && typeof window.FaultEngine.evaluate === 'function') {
+        var valuesMap = new Map();
+        var allPoints = window.PointRegistry.getAll();
+        for (var i = 0; i < allPoints.length; i++) {
+          valuesMap.set(allPoints[i].address, allPoints[i].currentValue);
+        }
+        var simHour = event.timestamp instanceof Date ? event.timestamp.getHours() : null;
+        window.FaultEngine.evaluate(valuesMap, { simHour: simHour });
+      }
+
+      // AHU-4-4_NEW has its own formula-driven state (not PointRegistry/BACnet
+      // addressed), so it needs its own fault evaluation — the legacy
+      // FaultEngine above never sees it. See AHU44NewFaultEngine.js for why
+      // F-03/F-04-style rules aren't ported 1:1.
+      if (window.AHU44NewFaultEngine && window.AHU44NewController &&
+          typeof window.AHU44NewFaultEngine.evaluate === 'function') {
+        window.AHU44NewFaultEngine.evaluate(window.AHU44NewController.getState());
+      }
+
+      // VAV-4-4-01/02 are downstream of AHU-4-4_NEW: push the AHU's current
+      // discharge air temp into each zone (this is what makes "Excessive
+      // Reheat" a real, connected fault rather than an isolated number —
+      // see VAVController.js's header), then evaluate each zone's fault
+      // rules against its freshly-recalculated state.
+      if (window.VAVController && window.AHU44NewController &&
+          typeof window.VAVController.updateDischargeAirTemp === 'function') {
+        var ahuSupplyAirTemp = window.AHU44NewController.getState().supplyAirTemp;
+        window.VAVController.getZoneIds().forEach(function (zoneId) {
+          window.VAVController.updateDischargeAirTemp(zoneId, ahuSupplyAirTemp);
+          if (window.VAVFaultEngine && typeof window.VAVFaultEngine.evaluate === 'function') {
+            window.VAVFaultEngine.evaluate(zoneId, window.VAVController.getState(zoneId));
+          }
+        });
+      }
+
+      // LL97 energy/GHG accumulation — was never wired to the clock before
+      // (pre-existing gap, not introduced here): LL97Accumulator.tick()
+      // existed and was fully tested but nothing ever called it, so the
+      // LL97 panel always showed zero. AHU-4-4_NEW's TMY3-driven outdoor
+      // air temp is reused here as the seasonal-factor input — it's
+      // already live weather data, no second weather source needed.
+      if (window.LL97Accumulator && window.AHU44NewController &&
+          typeof window.LL97Accumulator.tick === 'function') {
+        var llOaTemp = window.AHU44NewController.getState().oaTemperature;
+        window.LL97Accumulator.tick({ outdoorTemp: llOaTemp });
+      }
+
+      // Broadcast updated clock state to React tree
+      setSimulationState({
+        currentRow: event.rowIndex,
+        speed: window.SimulationEngine ? window.SimulationEngine.speed : 'pause',
+        interpolationFraction: event.interpolationFraction,
+        timestamp: event.timestamp
+      });
+    }
+
+    if (window.SimulationEngine && typeof window.SimulationEngine.onTick === 'function') {
+      window.SimulationEngine.onTick(handleTick);
+    }
+
+    return function () {
+      if (window.SimulationEngine && typeof window.SimulationEngine.offTick === 'function') {
+        window.SimulationEngine.offTick(handleTick);
+      }
+    };
+  }, []);
 
   // Provider order (outer to inner):
   // AuthContext → ModeContext → SimulationContext → PointRegistryContext → AlarmContext → Router
