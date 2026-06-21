@@ -46,10 +46,18 @@
   </style>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen">
+<body class="bg-gray-900 text-white h-screen">
 
-  <!-- React mount point -->
-  <div id="root"></div>
+  <!-- React mount point. h-full here is what actually makes every nested
+       overflow-y-auto pane (sidebars, diagrams, etc.) scrollable — without
+       it, h-full lower in the tree has nothing real to be 100% of, so
+       nothing ever clips/scrolls and content silently runs off the bottom
+       of the viewport instead. body is h-screen (not min-h-screen) for the
+       same reason: a MINIMUM height lets body grow past the viewport,
+       which (combined with its own overflow:hidden, disabling the
+       browser's normal page scrollbar) makes anything beyond the original
+       viewport height unreachable rather than scrollable. -->
+  <div id="root" class="h-full"></div>
 
   <!-- Fallback for browsers with JavaScript disabled -->
   <noscript>
