@@ -31,7 +31,7 @@ const ExceptionSchedule = (() => {
     const auth = useContext(window.AuthContext);
     const canModify = auth && auth.canModifySchedules ? auth.canModifySchedules() : false;
 
-    const [entries, setEntries] = useState(() => getDefaultExceptions(scheduleId || 'AHU-4-4'));
+    const [entries, setEntries] = useState(() => getDefaultExceptions(scheduleId || 'AHU-4-4_NEW'));
     const [selectedRow, setSelectedRow] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -42,7 +42,7 @@ const ExceptionSchedule = (() => {
 
     // Reset entries when scheduleId changes
     React.useEffect(() => {
-      setEntries(getDefaultExceptions(scheduleId || 'AHU-4-4'));
+      setEntries(getDefaultExceptions(scheduleId || 'AHU-4-4_NEW'));
       setSelectedRow(null);
     }, [scheduleId]);
 

@@ -268,7 +268,7 @@ const AHU44NewImageOverlay = (() => {
 
   function AHU44NewImageOverlayComponent() {
     return React.createElement('div', {
-      className: 'relative w-full min-h-full bg-gray-900',
+      className: 'relative w-full bg-gray-900',
       'data-testid': 'ahu-44-new-image-overlay',
     },
       // Live weather driver — invisible, pushes TMY3 data into the controller
@@ -276,11 +276,19 @@ const AHU44NewImageOverlay = (() => {
       // it cannot be manually overridden (see AHU44NewController.js).
       React.createElement(TMY3WeatherDriver, null),
 
-      // Background image (the Honeywell/TecSystems screenshot)
+      // Background image (the Honeywell/TecSystems screenshot). Sized by
+      // width only (h-auto) so its rendered box always matches its own
+      // intrinsic aspect ratio — no letterboxing from object-contain against
+      // an indeterminate parent height. The wrapper above has no forced
+      // height, so it's exactly as tall as the image, which is what lets the
+      // hotspot overlay below (absolute inset-0, matching this same wrapper)
+      // stay pixel-aligned with the image at any scroll position or window
+      // size. `block` avoids the few px of inline-image whitespace gap that
+      // would otherwise nudge the hotspot layer off by a hair.
       React.createElement('img', {
         src: IMAGE_SRC,
         alt: 'AHU-4-4_NEW — Honeywell SymmetrE / TecSystems AHU Schematic (Pre-Function/Ballroom Level 2)',
-        className: 'w-full h-full object-contain',
+        className: 'block w-full h-auto',
         draggable: false,
         style: { imageRendering: 'auto' },
       }),

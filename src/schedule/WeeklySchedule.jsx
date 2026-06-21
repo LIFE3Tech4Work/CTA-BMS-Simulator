@@ -4,11 +4,9 @@
  * Displays a Day/Time/Value table showing the weekly schedule pattern.
  * Columns: Day of Week, Start Time, End Time, Value (Active/Inactive)
  *
- * AHU-4-4: Normal pattern — weekday 08:00–18:00 Active
- * AHU-9-2: Fault condition — 24/7 Active (never turns off)
+ * AHU-4-4_NEW and AHU-23-1: Normal pattern — weekday 08:00–18:00 Active
  *
  * Functional buttons: Insert (add row), Modify (edit selected row), Delete (remove row)
- * Visually distinguishes fault schedule entries (24/7) from normal entries with red highlight.
  *
  * Supv+ security required to modify (read from AuthContext).
  * No import/export — exposes as window.WeeklySchedule
@@ -17,21 +15,9 @@
 const WeeklySchedule = (() => {
   const { useState, useContext } = React;
 
-  // Default schedule data for each AHU
+  // Default schedule data for each AHU — currently the same weekday
+  // 08:00–18:00 occupied pattern for both AHU-4-4_NEW and AHU-23-1.
   function getDefaultSchedule(scheduleId) {
-    if (scheduleId === 'AHU-9-2') {
-      // Fault condition: 24/7 active — AHU never turns off
-      return [
-        { id: 1, day: 'Monday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 2, day: 'Tuesday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 3, day: 'Wednesday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 4, day: 'Thursday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 5, day: 'Friday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 6, day: 'Saturday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true },
-        { id: 7, day: 'Sunday', startTime: '00:01:00', endTime: '23:59:00', value: 'Active', isFault: true }
-      ];
-    }
-    // AHU-4-4 and AHU-4-6: Normal pattern — weekday occupied 08:00–18:00
     return [
       { id: 1, day: 'Monday', startTime: '08:00:00', endTime: '18:00:00', value: 'Active', isFault: false },
       { id: 2, day: 'Tuesday', startTime: '08:00:00', endTime: '18:00:00', value: 'Active', isFault: false },
@@ -47,7 +33,7 @@ const WeeklySchedule = (() => {
     const auth = useContext(window.AuthContext);
     const canModify = auth && auth.canModifySchedules ? auth.canModifySchedules() : false;
 
-    const [entries, setEntries] = useState(() => getDefaultSchedule(scheduleId || 'AHU-4-4'));
+    const [entries, setEntries] = useState(() => getDefaultSchedule(scheduleId || 'AHU-4-4_NEW'));
     const [selectedRow, setSelectedRow] = useState(null);
     const [showInsertModal, setShowInsertModal] = useState(false);
     const [showModifyModal, setShowModifyModal] = useState(false);
@@ -60,7 +46,7 @@ const WeeklySchedule = (() => {
 
     // Reset entries when scheduleId changes
     React.useEffect(() => {
-      setEntries(getDefaultSchedule(scheduleId || 'AHU-4-4'));
+      setEntries(getDefaultSchedule(scheduleId || 'AHU-4-4_NEW'));
       setSelectedRow(null);
     }, [scheduleId]);
 
@@ -273,14 +259,6 @@ const WeeklySchedule = (() => {
                 })
           )
         )
-      ),
-
-      // Fault schedule legend
-      (scheduleId === 'AHU-9-2') && React.createElement('div', {
-        className: 'px-3 py-2 bg-red-900 bg-opacity-20 border-t border-red-800 text-xs text-red-300'
-      },
-        React.createElement('span', { className: 'inline-block w-2 h-2 rounded-full bg-red-500 mr-1' }),
-        'Fault: AHU-9-2 is scheduled 24/7 with no unoccupied periods. This is a scheduling fault condition.'
       ),
 
       // Security notice if can't modify

@@ -8,7 +8,7 @@ const SymmetreAppChrome = (function() {
   const { useContext, useState, useCallback } = React;
 
   // ─── Menu Bar Items ─────────────────────────────────────────────────────────
-  const MENU_ITEMS = ['Station', 'View', 'Action', 'Help', 'Sign Off'];
+  const MENU_ITEMS = ['Station', 'View', 'Action', 'Schedule Manager', 'Help', 'Sign Off'];
 
   // ─── Toolbar Buttons ────────────────────────────────────────────────────────
   const TOOLBAR_BUTTONS = [
@@ -41,9 +41,10 @@ const SymmetreAppChrome = (function() {
     // Menu items with their dropdown options
     const MENU_DROPDOWNS = {
       'Station': [
-        { label: 'AHU-4-4 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4'; } },
-        { label: 'AHU-4-6 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-6'; } },
-        { label: 'Schedule Manager', action: function() { window.location.hash = '#/schedule'; } },
+        { label: '🌀 AHU-4-4_NEW Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4_NEW'; } },
+        { label: '🌀 AHU-23-1 Overview', action: function() { window.location.hash = '#/symmetre/AHU-23-1'; } },
+        { label: '🌬️ VAV-4-4-01 (Pre-Function) Overview', action: function() { window.location.hash = '#/symmetre/VAV-4-4-01'; } },
+        { label: '🌬️ VAV-4-4-02 (Ballroom) Overview', action: function() { window.location.hash = '#/symmetre/VAV-4-4-02'; } },
       ],
       'View': [
         { label: 'Alarm Summary', action: function() { window.location.hash = '#/alarms'; } },
@@ -75,6 +76,12 @@ const SymmetreAppChrome = (function() {
         window.location.hash = '#/auth';
         return;
       }
+      if (item === 'Schedule Manager') {
+        // Direct-action item, no dropdown — same pattern as Sign Off
+        window.location.hash = '#/schedule';
+        setActiveMenu(null);
+        return;
+      }
       // Toggle dropdown for other items
       setActiveMenu(function(prev) { return prev === item ? null : item; });
     }, []);
@@ -93,6 +100,7 @@ const SymmetreAppChrome = (function() {
       MENU_ITEMS.map(function(item) {
         const isActive = activeMenu === item;
         const isSignOff = item === 'Sign Off';
+        const isDirectAction = isSignOff || item === 'Schedule Manager'; // no dropdown — click navigates immediately
         const dropdownItems = MENU_DROPDOWNS[item] || null;
 
         return React.createElement('div', {
@@ -105,11 +113,11 @@ const SymmetreAppChrome = (function() {
               (isSignOff ? 'text-red-300 hover:text-red-200' : ''),
             onClick: function(e) { e.stopPropagation(); handleMenuClick(item); },
             'aria-label': item,
-            'aria-haspopup': dropdownItems ? 'true' : undefined,
+            'aria-haspopup': (dropdownItems && !isDirectAction) ? 'true' : undefined,
             'aria-expanded': isActive ? 'true' : undefined
           }, item),
           // Dropdown menu
-          isActive && !isSignOff && dropdownItems ? React.createElement('div', {
+          isActive && !isDirectAction && dropdownItems ? React.createElement('div', {
             className: 'absolute top-full left-0 z-50 bg-gray-800 border border-gray-600 rounded shadow-lg min-w-[180px] py-1'
           },
             dropdownItems.map(function(opt, idx) {
@@ -121,7 +129,7 @@ const SymmetreAppChrome = (function() {
             })
           ) : null,
           // Placeholder for items without dropdowns (Edit, Configure)
-          isActive && !isSignOff && !dropdownItems ? React.createElement('div', {
+          isActive && !isDirectAction && !dropdownItems ? React.createElement('div', {
             className: 'absolute top-full left-0 z-50 bg-gray-800 border border-gray-600 rounded shadow-lg min-w-[140px] py-1'
           },
             React.createElement('div', { className: 'px-3 py-1 text-xs text-gray-400 italic' }, 'No actions available')
