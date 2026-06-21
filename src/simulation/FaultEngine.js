@@ -22,67 +22,68 @@
       id: 'F-01',
       description: 'Simultaneous heating and cooling',
       priority: 'urgent',
-      sourcePoint: 'AO_PHT@DEV4004',
+      sourcePoint: 'AO103@DEV4006',
       condition: function (values) {
-        const pht = values.get('AO_PHT@DEV4004');
-        const chw = values.get('AO_CHW@DEV4004');
+        const pht = values.get('AO103@DEV4006');
+        const chw = values.get('AO102@DEV4006');
         return pht > 20 && chw > 20;
       }
     },
     {
       id: 'F-02',
-      description: 'Supply air temperature deviation',
+      description: 'Supply air temperature outside expected design band (52–58°F)',
       priority: 'high',
-      sourcePoint: 'AI_SAT@DEV4004',
+      sourcePoint: 'AI301@DEV4004',
+      designBand: { min: 52, max: 58 },
       condition: function (values) {
-        const sat = values.get('AI_SAT@DEV4004');
-        const satSp = values.get('AO_SAT_SP@DEV4004');
-        if (sat === undefined || satSp === undefined) return false;
-        return Math.abs(sat - satSp) > 5;
+        const sat = values.get('AI301@DEV4004');
+        if (sat === undefined) return false;
+        return sat < 52 || sat > 58;
       }
     },
     {
       id: 'F-03',
-      description: 'AHU running during unoccupied hours',
+      description: 'AHU running while Run Schedule is OFF',
       priority: 'high',
-      sourcePoint: 'BI_FAN@DEV4004',
+      sourcePoint: 'AO101@DEV4004',
       condition: function (values) {
-        const fan = values.get('BI_FAN@DEV4004');
-        const schedule = values.get('BI_OCC@DEV4004');
-        return fan === 1 && schedule === 0;
+        const fanSpeed = values.get('AO101@DEV4004');
+        const runSchedule = values.get('BI601@DEV4004');
+        return fanSpeed > 0 && runSchedule === 0;
       }
     },
     {
       id: 'F-04',
       description: 'Outdoor air damper fully closed during occupied hours',
       priority: 'urgent',
-      sourcePoint: 'AO_OAD@DEV4004',
+      sourcePoint: 'AO104@DEV4004',
       condition: function (values) {
-        const oad = values.get('AO_OAD@DEV4004');
-        const schedule = values.get('BI_OCC@DEV4004');
+        const oad = values.get('AO104@DEV4004');
+        const schedule = values.get('BI601@DEV4004');
         return oad < 5 && schedule === 1;
       }
     },
     {
       id: 'F-05',
-      description: 'Economizer not active when OAT permits',
+      description: 'Mechanical cooling support running while free-cooling conditions are available (OAT < 55°F) and OA damper is not fully open',
       priority: 'high',
-      sourcePoint: 'AI_OAT@DEV5000',
+      sourcePoint: 'BI801@DEV6000',
       condition: function (values) {
-        const oat = values.get('AI_OAT@DEV5000');
-        const oad = values.get('AO_OAD@DEV4004');
-        const chw = values.get('AO_CHW@DEV4004');
-        return oat < 55 && oad < 50 && chw > 20;
+        const ctOn = values.get('BI801@DEV6000');
+        const oat = values.get('AI701@DEV5000');
+        const oaDamper = values.get('AO104@DEV4004');
+        if (ctOn === undefined || oat === undefined || oaDamper === undefined) return false;
+        return ctOn === 1 && oat < 55 && oaDamper < 80;
       }
     },
     {
       id: 'F-06',
-      description: 'CO2 exceeds ventilation threshold',
+      description: 'CO2 exceeds ventilation threshold (>1,100 ppm, ASHRAE 62.1 upper guideline)',
       priority: 'urgent',
-      sourcePoint: 'AI_CO2@DEV4004',
+      sourcePoint: 'AI401@DEV4004',
       condition: function (values) {
-        const co2 = values.get('AI_CO2@DEV4004');
-        return co2 > 800;
+        const co2 = values.get('AI401@DEV4004');
+        return co2 > 1100;
       }
     }
   ];

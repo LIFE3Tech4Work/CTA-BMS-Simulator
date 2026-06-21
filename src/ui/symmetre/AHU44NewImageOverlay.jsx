@@ -17,84 +17,191 @@
 const AHU44NewImageOverlay = (() => {
   'use strict';
 
-  const { useState, useEffect } = React;
+  const { useState, useEffect, useContext } = React;
 
   // ─── Image path ─────────────────────────────────────────────────────────────
 
-  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell.png';
+  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell_v2.png';
+
+  // ─── TMY3 Weather Driver ────────────────────────────────────────────────────
+  // Pushes live TMY3 outdoor air temperature/enthalpy into AHU44NewController
+  // on every simulation tick, mirroring the pattern used by ZoneTabs.jsx's
+  // OutsideAirStrip. Outdoor air temperature has no manual override in this
+  // controller — see AHU44NewController.js WEATHER_DRIVEN_KEYS / setValue.
+  function TMY3WeatherDriver() {
+    var simContext = useContext(window.SimulationContext);
+
+    useEffect(function () {
+      var row = (simContext && simContext.currentRow) || 1;
+      var fraction = (simContext && simContext.interpolationFraction) || 0;
+      if (window.AHU44NewController && window.AHU44NewController.updateFromTMY3) {
+        window.AHU44NewController.updateFromTMY3(row, fraction);
+      }
+    }, [simContext && simContext.currentRow, simContext && simContext.interpolationFraction]);
+
+    return null; // driver only — renders nothing
+  }
 
   // ─── Hotspot definitions ────────────────────────────────────────────────────
-  // Positions as % of image width/height, mapped from the screenshot.
-  // The screenshot shows a complex multi-section AHU with:
-  // - Exhaust air section (top left)
-  // - OA plenum + filter + preheat coil (left-center)
-  // - Cooling coils (center)
-  // - Supply fan + VFD (center-right)
-  // - Return air section (right)
-  // - Interlock panel (top-right)
+  // Positions as % of image width/height, measured directly against
+  // AHU_4_4_NEW_Honeywell_v2.png (1617×875), sourced from the Honeywell
+  // SymmetrE screenshot (Hotel_AHU4_4Edit.png, Service: Pre-Function/Ballroom
+  // Level 2, Location: Level 4). Each (x,y,w,h) was measured by cropping and
+  // gridding the source image at 2x zoom, not estimated by eye.
+  //
+  // `live: true` hotspots bind to a real AHU44NewController state field and
+  // update on every tick. `live: false` hotspots are static reference labels
+  // for real values visible on the Honeywell screenshot that are not yet
+  // modeled in the controller (e.g. a separate return fan, dual freeze coils,
+  // CHW flow GPM) — they display the screenshot's captured value as text so
+  // the graphic stays visually complete, but do not imply live simulation.
 
   const HOTSPOTS = [
-    // OA Plenum CFM
-    { id: 'oaCfm', stateKey: 'oaCFM', label: 'OA Plenum CFM', units: 'CFM',
-      x: 18, y: 42, w: 8, h: 5 },
-    // Preheat discharge temp
-    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F',
-      x: 30, y: 42, w: 7, h: 5 },
-    // Cooling coil 1 discharge (TS showing 57.0°F)
-    { id: 'coolTemp1', stateKey: 'supplyAirTemp', label: 'Cooling Coil Temp', units: '°F',
-      x: 42, y: 42, w: 7, h: 5 },
-    // Cooling coil 2 discharge (56.5°F)
-    { id: 'coolTemp2', stateKey: 'mixedAirTemp', label: 'Mixed Air Temp', units: '°F',
-      x: 42, y: 50, w: 7, h: 5 },
-    // Supply fan CFM (main, 8550 or 12438)
-    { id: 'supplyCfm', stateKey: 'cfm', label: 'Supply CFM', units: 'CFM',
-      x: 56, y: 28, w: 9, h: 5 },
-    // VFD speed
-    { id: 'fanSpeed', stateKey: 'fanSpeed', label: 'VFD Speed', units: '%',
-      x: 67, y: 42, w: 6, h: 5 },
-    // OA Damper %
-    { id: 'oaDamper', stateKey: 'oaDamperPosition', label: 'OA Damper', units: '%',
-      x: 12, y: 32, w: 6, h: 4 },
-    // Exhaust damper
-    { id: 'exhDamper', stateKey: 'exhaustDamperPct', label: 'Exhaust Damper', units: '%',
-      x: 12, y: 18, w: 6, h: 4 },
-    // CHW valve position
-    { id: 'chwValve', stateKey: 'chwValvePosition', label: 'CHW Valve', units: '%',
-      x: 42, y: 58, w: 6, h: 4 },
-    // PHT valve position
-    { id: 'phtValve', stateKey: 'phtValvePosition', label: 'PHT Valve', units: '%',
-      x: 30, y: 58, w: 6, h: 4 },
-    // Fan status (SHUTDOWN/START/ON)
-    { id: 'fanStatus', stateKey: 'fanRunning', label: 'Fan Status', units: '',
-      x: 60, y: 52, w: 10, h: 7 },
-    // Interlock status
-    { id: 'interlock', stateKey: 'interlockOn', label: 'Interlock', units: '',
-      x: 60, y: 18, w: 9, h: 5 },
-    // Supply static pressure
-    { id: 'supplyStatic', stateKey: 'supplyStaticPressure', label: 'Supply Static', units: 'kBn',
-      x: 78, y: 28, w: 7, h: 5 },
-    // Return static pressure
-    { id: 'returnStatic', stateKey: 'returnStaticPressure', label: 'Return Static', units: '%',
-      x: 78, y: 42, w: 7, h: 5 },
-    // Freeze pump status
-    { id: 'freezePump', stateKey: 'freezePumpOn', label: 'Freeze Pump', units: '',
-      x: 40, y: 72, w: 8, h: 5 },
+    // ── Live, bound to controller state ──────────────────────────────────────
+    { id: 'oaCfm', stateKey: 'oaCFM', label: 'OA Plenum CFM', units: 'CFM', live: true,
+      x: 8.78, y: 53.37, w: 3.46, h: 1.83 },
+    { id: 'oaDamper', stateKey: 'oaDamperPosition', label: 'OA Damper', units: '%', live: true,
+      x: 14.84, y: 63.09, w: 2.6, h: 1.6 },
+    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F', live: true,
+      x: 24.61, y: 52.91, w: 3.09, h: 1.94 },
+    { id: 'phtValve', stateKey: 'phtValvePosition', label: 'Heating Valve', units: '%', live: true,
+      x: 40.07, y: 67.66, w: 1.67, h: 1.83 },
+    { id: 'chwValve', stateKey: 'chwValvePosition', label: 'Cooling Valve', units: '%', live: true,
+      x: 44.84, y: 67.66, w: 1.86, h: 1.83 },
+    { id: 'supplyCfm', stateKey: 'cfm', label: 'Supply CFM', units: 'CFM', live: true,
+      x: 57.51, y: 57.14, w: 4.95, h: 1.71 },
+    { id: 'fanSpeed', stateKey: 'fanSpeed', label: 'VFD Speed', units: '%', live: true,
+      x: 67.9, y: 67.66, w: 2.6, h: 1.83 },
+    { id: 'fanStatus', stateKey: 'fanRunning', label: 'Fan Status', units: '', live: true,
+      x: 60.11, y: 71.09, w: 11.01, h: 4.34 },
+    { id: 'interlock', stateKey: 'interlockOn', label: 'Interlock', units: '', live: true,
+      x: 57.02, y: 35.66, w: 13.98, h: 8.69 },
+    { id: 'supplyStatic', stateKey: 'supplyStaticPressure', label: 'Supply Static', units: '%', live: true,
+      x: 71.43, y: 54.29, w: 4.64, h: 1.71 },
+    { id: 'supplyAirTemp', stateKey: 'supplyAirTemp', label: 'Supply Air Temp / Active SP (Cooling)', units: '°F', live: true,
+      x: 71.43, y: 56.69, w: 4.14, h: 1.83 },
+    { id: 'returnAirTemp', stateKey: 'returnAirTemp', label: 'Return Air Temp', units: '°F', live: true,
+      x: 71.74, y: 22.17, w: 3.4, h: 1.83 },
+    { id: 'freezePump', stateKey: 'freezePumpOn', label: 'Freeze Pump', units: '', live: true,
+      x: 35.87, y: 72.91, w: 3.83, h: 2.29 },
+    { id: 'co2Sensor', stateKey: 'co2Sensor', label: 'CO2 Sensor', units: 'PPM', live: true,
+      x: 77.18, y: 22.17, w: 3.22, h: 1.83 },
+    { id: 'commonDamper', stateKey: 'commonDamperOpen', label: 'Common Damper', units: '', live: true,
+      x: 7.54, y: 36.8, w: 5.32, h: 2.06 },
+    { id: 'exhaustDamper', stateKey: 'exhaustDamperPct', label: 'Exhaust Damper', units: '%', live: true,
+      x: 15.77, y: 32.91, w: 2.29, h: 1.49 },
+
+    // ── Static reference labels — real screenshot values, not yet modeled ───
+    // Freeze coils are shown as one combined preheatTemp in the controller;
+    // the screenshot has two independent coil readings (57.0°F / 56.5°F).
+    { id: 'freezeCoil1Ref', label: 'Freeze Coil 1 (reference)', units: '°F', live: false, refValue: '57.0',
+      x: 47.74, y: 59.89, w: 3.09, h: 1.71 },
+    { id: 'freezeCoil2Ref', label: 'Freeze Coil 2 (reference)', units: '°F', live: false, refValue: '56.5',
+      x: 47.74, y: 62.74, w: 3.09, h: 1.71 },
+    // Real building has a separate return fan (RF-4-7) with its own CFM/Hz —
+    // controller currently models one shared fan for supply+return.
+    { id: 'returnFanCfmRef', label: 'Return Fan CFM (reference)', units: 'CFM', live: false, refValue: '12,438',
+      x: 55.66, y: 22.17, w: 6.06, h: 1.6 },
+    { id: 'returnFanCfm2Ref', label: 'Return Fan CFM #2 (reference)', units: 'CFM', live: false, refValue: '8,102',
+      x: 58.01, y: 33.14, w: 3.71, h: 1.6 },
+    { id: 'returnFanHzRef', label: 'Return Fan Hz (reference)', units: 'Hz', live: false, refValue: '60',
+      x: 67.9, y: 33.14, w: 2.91, h: 1.6 },
+    { id: 'returnAirBtuRef', label: 'Return Air BTU (reference)', units: 'BTU', live: false, refValue: '28',
+      x: 72.48, y: 15.89, w: 2.66, h: 1.83 },
+    { id: 'returnAirRHRef', label: 'Return Air %RH (reference)', units: '%RH', live: false, refValue: '56.9',
+      x: 71.74, y: 18.86, w: 4.21, h: 1.94 },
+    { id: 'supplyAirRHRef', label: 'Supply Air %RH (reference)', units: '%RH', live: false, refValue: '87.6',
+      x: 71.43, y: 54.29, w: 4.64, h: 1.71 },
+    // CHW flow (GPM) and branch-duct static (IWC) are not modeled at all yet.
+    { id: 'supplyDuctIwcRef', label: 'Supply Duct Static (reference)', units: 'IWC', live: false, refValue: '1.66',
+      x: 75.76, y: 52.57, w: 3.28, h: 2.06 },
   ];
+
+  // ─── Alarm-related hotspot map ──────────────────────────────────────────────
+  // Built from AHU44NewFaultEngine.rules so the graphic can visually surface
+  // its own active alarms — the real product ties dynamic display objects'
+  // color/flash directly to alarm condition (see Overview guide, "Responding
+  // to alarms and events"). Maps stateKey -> [ruleId, ...].
+  function buildAlarmKeyMap() {
+    var map = {};
+    var engine = window.AHU44NewFaultEngine;
+    if (!engine || !engine.rules) return map;
+    engine.rules.forEach(function (rule) {
+      (rule.relatedStateKeys || []).forEach(function (key) {
+        if (!map[key]) map[key] = [];
+        map[key].push(rule.id);
+      });
+    });
+    return map;
+  }
 
   // ─── Hotspot Component ──────────────────────────────────────────────────────
 
   function Hotspot({ spot }) {
     var ctrl = window.AHU44NewController;
     var initialState = window.AHU44NewState || (ctrl ? ctrl.getState() : {});
-    var [value, setValue] = useState(initialState[spot.stateKey]);
+    var [value, setValue] = useState(spot.live === false ? null : initialState[spot.stateKey]);
+    var [isManual, setIsManual] = useState(false);
+    var [isAlarming, setIsAlarming] = useState(false);
 
     useEffect(function() {
+      if (spot.live === false) return; // static reference marker — no subscription
       if (!ctrl) return;
       var unsub = ctrl.subscribe(function(s) {
         setValue(s[spot.stateKey]);
+        if (ctrl.getModes) {
+          setIsManual(ctrl.getModes()[spot.stateKey] === 'Manual');
+        }
       });
       return unsub;
-    }, [spot.stateKey]);
+    }, [spot.stateKey, spot.live]);
+
+    // Poll the AHU-4-4_NEW fault engine for any active alarm tied to this
+    // hotspot's stateKey. Only hotspots that actually appear in a fault
+    // rule's relatedStateKeys do this work.
+    useEffect(function() {
+      if (spot.live === false) return;
+      var alarmKeyMap = buildAlarmKeyMap();
+      var relatedRuleIds = alarmKeyMap[spot.stateKey];
+      if (!relatedRuleIds || relatedRuleIds.length === 0) return;
+
+      function checkAlarms() {
+        var engine = window.AHU44NewFaultEngine;
+        if (!engine || !engine.getActiveAlarms) return;
+        var active = engine.getActiveAlarms();
+        var matches = active.some(function(a) { return relatedRuleIds.indexOf(a.condition) !== -1; });
+        setIsAlarming(matches);
+      }
+
+      checkAlarms();
+      var interval = setInterval(checkAlarms, 1500);
+      return function() { clearInterval(interval); };
+    }, [spot.stateKey, spot.live]);
+
+    // Static reference marker — display the screenshot's captured value as-is,
+    // styled distinctly (amber/dim) to signal "not live simulation data."
+    if (spot.live === false) {
+      return React.createElement('div', {
+        className: 'absolute flex items-center justify-center rounded ' +
+          'bg-amber-950/60 border border-amber-500/40 ' +
+          'text-[8px] sm:text-[9px] font-mono text-amber-200/80 ' +
+          'shadow pointer-events-none select-none',
+        style: {
+          left: spot.x + '%',
+          top: spot.y + '%',
+          width: spot.w + '%',
+          height: spot.h + '%',
+          minWidth: '36px',
+          minHeight: '14px',
+        },
+        title: spot.label + ': ' + spot.refValue + (spot.units ? ' ' + spot.units : '') +
+          ' — reference value from source screenshot, not simulated',
+        'aria-label': spot.label + ' ' + spot.refValue + ' ' + spot.units + ' (reference, not live)',
+        role: 'note',
+      },
+        React.createElement('span', null, spot.refValue + (spot.units ? ' ' + spot.units : ''))
+      );
+    }
 
     // Format display value
     var display = '--';
@@ -120,9 +227,15 @@ const AHU44NewImageOverlay = (() => {
         : 'bg-red-900/70 border-red-400/50';
     }
 
+    // Active-alarm state — ties this hotspot's appearance to
+    // AHU44NewFaultEngine's active alarms (real SymmetrE displays color/
+    // flash dynamic objects in response to alarm condition; previously this
+    // graphic had no alarm awareness at all).
+    var alarmClass = isAlarming ? ' ring-2 ring-red-500 animate-bms-flash' : '';
+
     return React.createElement('div', {
       className: 'absolute flex items-center justify-center rounded ' +
-        bgClass + ' border ' +
+        bgClass + alarmClass + ' border ' +
         'text-[9px] sm:text-[10px] font-mono text-white font-bold ' +
         'shadow-lg pointer-events-none select-none',
       style: {
@@ -133,11 +246,21 @@ const AHU44NewImageOverlay = (() => {
         minWidth: '40px',
         minHeight: '16px',
       },
-      title: spot.label + ': ' + display + (spot.units ? ' ' + spot.units : '') + ' (read-only)',
-      'aria-label': spot.label + ' ' + display + ' ' + spot.units,
+      title: spot.label + ': ' + display + (spot.units ? ' ' + spot.units : '') +
+        (isManual ? ' (Manual override)' : '') +
+        (isAlarming ? ' — ALARM ACTIVE' : '') + ' (read-only)',
+      'aria-label': spot.label + ' ' + display + ' ' + spot.units +
+        (isManual ? ' manual override' : '') + (isAlarming ? ' alarm active' : ''),
       role: 'status',
     },
-      React.createElement('span', null, display + (spot.units ? ' ' + spot.units : ''))
+      React.createElement('span', null, display + (spot.units ? ' ' + spot.units : '')),
+      // "M" badge — mirrors the real SymmetrE trend-display convention of
+      // tagging manually-set values (e.g. "87.0°C M") rather than inventing
+      // a non-standard indicator.
+      isManual && React.createElement('span', {
+        className: 'ml-0.5 text-amber-300',
+        title: 'Manually set from Controls Sidebar (not simulation-driven)',
+      }, 'M')
     );
   }
 
@@ -148,6 +271,11 @@ const AHU44NewImageOverlay = (() => {
       className: 'relative w-full min-h-full bg-gray-900',
       'data-testid': 'ahu-44-new-image-overlay',
     },
+      // Live weather driver — invisible, pushes TMY3 data into the controller
+      // on every simulation tick. Outdoor air temperature is always live —
+      // it cannot be manually overridden (see AHU44NewController.js).
+      React.createElement(TMY3WeatherDriver, null),
+
       // Background image (the Honeywell/TecSystems screenshot)
       React.createElement('img', {
         src: IMAGE_SRC,

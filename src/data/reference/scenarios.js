@@ -25,8 +25,8 @@ export const Scenarios = [
     description: "High outdoor temperature and humidity prevent economizer operation. OA damper at minimum position while mechanical cooling handles full load.",
     startRow: 480,
     pointOverrides: {
-      "AO_OAD_44@DEV4004": 15,
-      "AO_CHW_44@DEV4004": 85
+      "AO104@DEV4004": 15,
+      "AO102@DEV4004": 85
     }
   },
   {
@@ -35,8 +35,8 @@ export const Scenarios = [
     description: "Fault condition where both preheat and chilled water valves are open simultaneously, wasting energy. Triggers F-03 alarm.",
     startRow: 300,
     pointOverrides: {
-      "AO_CHW_46@DEV4006": 45,
-      "AO_PHT_46@DEV4006": 35
+      "AO102@DEV4006": 45,
+      "AO103@DEV4006": 35
     }
   },
   {
@@ -45,7 +45,7 @@ export const Scenarios = [
     description: "RunSchedule forced to Occupied during unoccupied hours (22:00–06:00). Demonstrates F-02 scheduling fault where AHU runs unnecessarily overnight.",
     startRow: 22,
     pointOverrides: {
-      "BI_SCHED_44@DEV4004": 1
+      "BI601@DEV4004": 1
     }
   },
   {
@@ -54,7 +54,7 @@ export const Scenarios = [
     description: "CO₂ sensor reading drops below 100 ppm indicating sensor failure or disconnection. Triggers F-01 alarm for abnormally low reading.",
     startRow: 250,
     pointOverrides: {
-      "AI_CO2_44@DEV4004": 45
+      "AI401@DEV4004": 45
     }
   },
   {
@@ -63,7 +63,7 @@ export const Scenarios = [
     description: "Preheat coil valve stuck at approximately 25% position for extended duration. Indicates actuator failure or control signal loss. Triggers F-04 after 3+ hours.",
     startRow: 150,
     pointOverrides: {
-      "AO_PHT_44@DEV4004": 25.0
+      "AO103@DEV4004": 25.0
     }
   },
   {
@@ -72,20 +72,20 @@ export const Scenarios = [
     description: "Mild outdoor conditions (OAT < 55°F, low enthalpy) permit free cooling via economizer. OA damper should be fully open to reduce mechanical cooling load.",
     startRow: 50,
     pointOverrides: {
-      "AI_OAT@DEV5000": 52,
-      "AI_OAH@DEV5000": 20,
-      "AO_OAD_44@DEV4004": 100
+      "AI701@DEV5000": 52,
+      "AI703@DEV5000": 20,
+      "AO104@DEV4004": 100
     }
   },
   {
     id: 8,
     name: "Cooling Tower Fault",
-    description: "Cooling tower running at 100% speed while outdoor conditions are favorable for free cooling. Triggers F-05 indicating controls failure or stuck VFD.",
+    description: "Cooling tower running (CT-02 status ON) while outdoor conditions are favorable for free cooling (OAT below 55°F, low humidity). Demonstrates a controls failure where mechanical cooling support continues despite an available free-cooling opportunity — students should flag this against the economizer logic taught in Scenario 7.",
     startRow: 60,
     pointOverrides: {
-      "AO_CT02@DEV5000": 100,
-      "AI_OAT@DEV5000": 48,
-      "AI_OAH@DEV5000": 18
+      "BI801@DEV6000": 1,
+      "AI701@DEV5000": 48,
+      "AI703@DEV5000": 18
     }
   },
   {
@@ -94,7 +94,7 @@ export const Scenarios = [
     description: "Elevated return air humidity in AHU-4-6 zone. Demonstrates dehumidification demand and impact on cooling coil operation and energy consumption.",
     startRow: 500,
     pointOverrides: {
-      "AI_RAH_46@DEV4006": 72
+      "AI402@DEV4006": 72
     }
   },
   {
@@ -103,9 +103,9 @@ export const Scenarios = [
     description: "AHU operating during unoccupied nighttime hours with reduced ventilation. Shows typical after-hours operation with minimum OA damper position.",
     startRow: 3,
     pointOverrides: {
-      "BI_SCHED_44@DEV4004": 0,
-      "AO_OAD_44@DEV4004": 10,
-      "AO_FAN_44@DEV4004": 30
+      "BI601@DEV4004": 0,
+      "AO104@DEV4004": 10,
+      "AO101@DEV4004": 30
     }
   },
   {
@@ -114,7 +114,7 @@ export const Scenarios = [
     description: "AHU-9-2 style fault where system runs 24/7 without unoccupied periods. Demonstrates energy waste from improper schedule configuration.",
     startRow: 144,
     pointOverrides: {
-      "BI_SCHED_44@DEV4004": 1
+      "BI601@DEV4004": 1
     }
   },
   {
@@ -123,7 +123,7 @@ export const Scenarios = [
     description: "Supply air fan speed modulating normally between 40–70% to maintain duct static pressure. Demonstrates healthy VFD operation and load-following behavior.",
     startRow: 260,
     pointOverrides: {
-      "AO_FAN_44@DEV4004": 55
+      "AO101@DEV4004": 55
     }
   },
   {
@@ -132,9 +132,9 @@ export const Scenarios = [
     description: "Maximum summer cooling demand with CHW valve near 100%, fan at high speed, and OA damper at minimum. Hottest afternoon conditions in the dataset.",
     startRow: 750,
     pointOverrides: {
-      "AO_CHW_44@DEV4004": 95,
-      "AO_FAN_44@DEV4004": 90,
-      "AO_OAD_44@DEV4004": 15
+      "AO102@DEV4004": 95,
+      "AO101@DEV4004": 90,
+      "AO104@DEV4004": 15
     }
   },
   {
@@ -143,10 +143,10 @@ export const Scenarios = [
     description: "Mild spring conditions with fluctuating heating/cooling demand. Economizer swings between full open and modulated positions as outdoor temp varies around changeover point.",
     startRow: 100,
     pointOverrides: {
-      "AI_OAT@DEV5000": 58,
-      "AO_OAD_44@DEV4004": 65,
-      "AO_CHW_44@DEV4004": 20,
-      "AO_PHT_44@DEV4004": 10
+      "AI701@DEV5000": 58,
+      "AO104@DEV4004": 65,
+      "AO102@DEV4004": 20,
+      "AO103@DEV4004": 10
     }
   },
   {

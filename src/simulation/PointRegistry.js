@@ -54,6 +54,15 @@ const PointRegistry = (() => {
   /**
    * Update a point's value. Notifies subscribers only if the change
    * exceeds the point's COV increment threshold.
+   *
+   * Note on the Honeywell SymmetrE/EBI spec rule that Inputs (AI/BI) can't be
+   * put into Manual directly: that restriction is enforced at the UI layer
+   * (ControlsSidebar.jsx only renders AO/BO as editable white boxes), not
+   * here. setValue() itself stays type-agnostic because legitimate internal
+   * callers — training-scenario fixtures, which inject fault conditions
+   * (e.g. "CO2 Sensor Fault") by writing directly to sensor addresses with
+   * source 'operator' — depend on being able to write any point type.
+   *
    * @param {string} address - BACnet address
    * @param {number|boolean} value - New value
    * @param {string} source - 'simulation' | 'operator' | 'fault'
@@ -95,6 +104,23 @@ const PointRegistry = (() => {
       previousValues.set(address, value);
       _notifySubscribers(address, point);
     }
+  }
+
+  /**
+   * Toggle a point's Out of Service state. While Out of Service, the
+   * controller "doesn't read anything controlling it other than the value
+   * given by the operator" (per spec) — interpolate() skips OOS points just
+   * like it skips Manual-mode points. Checking this box is also what allows
+   * an Input (AI/BI) to have its PV operator-set at all; unchecking it
+   * returns the point to normal controller-driven updates.
+   * @param {string} address - BACnet address
+   * @param {boolean} outOfService - New Out of Service state
+   */
+  function setOutOfService(address, outOfService) {
+    const point = points.get(address);
+    if (!point) return;
+    point.outOfService = !!outOfService;
+    _notifySubscribers(address, point);
   }
 
   // ─── Metadata Access ────────────────────────────────────────────────────────
@@ -195,8 +221,9 @@ const PointRegistry = (() => {
       const data = point.data;
       if (!data || data.length === 0) return;
 
-      // Skip points in Manual mode — operator-controlled values don't interpolate
-      if (point.mode === 'Manual') return;
+      // Skip points in Manual mode or Out of Service — operator-controlled
+      // values don't interpolate
+      if (point.mode === 'Manual' || point.outOfService) return;
 
       let newValue;
 
@@ -258,6 +285,7 @@ const PointRegistry = (() => {
     // Value access
     getValue,
     setValue,
+    setOutOfService,
     getMetadata,
     getAll,
     query,

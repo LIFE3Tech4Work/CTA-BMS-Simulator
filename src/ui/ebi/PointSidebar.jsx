@@ -7,7 +7,7 @@
  */
 
 const EBIPointSidebar = (function() {
-  const { useState, useEffect, useCallback, useRef } = React;
+  const { useState, useEffect, useCallback, useContext, useRef } = React;
 
   // ─── Constants ──────────────────────────────────────────────────────────────
   const BAR_FILL_COLOR = '#00BFFF'; // Cyan
@@ -172,6 +172,49 @@ const EBIPointSidebar = (function() {
     );
   }
 
+  // ─── Out of Service Toggle ─────────────────────────────────────────────────
+  // Matches the real SymmetrE point-detail layout: a checkbox labeled
+  // "Out of Service" sits below the status dots/PV. Checking it is the only
+  // way to manually override an Input (AI/BI) point's value — Inputs have no
+  // Manual mode of their own, per the Operator Manual.
+  //
+  // Gated to Oper+ privilege via window.AuthContext — the same threshold
+  // ControlsSidebar.jsx already applies to AO/BO editability. This isn't an
+  // instructor-only control: in real EBI, any signed-in operator can take a
+  // point Out of Service, the same as they can edit a setpoint. A signed-out
+  // / ViewOnly visitor sees the checkbox as disabled, not hidden — matching
+  // how the rest of the app shows state to unauthenticated viewers.
+  function OutOfServiceToggle({ pointId, checked }) {
+    const auth = useContext(window.AuthContext);
+    const canToggle = window.AuthHelpers
+      ? window.AuthHelpers.hasPrivilege((auth && auth.securityLevel) || 'ViewOnly', 'Oper')
+      : false;
+
+    const handleChange = useCallback(function(e) {
+      if (!canToggle) return;
+      const registry = window.PointRegistry;
+      if (registry && typeof registry.setOutOfService === 'function') {
+        registry.setOutOfService(pointId, e.target.checked);
+      }
+    }, [pointId, canToggle]);
+
+    return React.createElement('label', {
+      className: 'flex items-center gap-2 mt-3 text-xs select-none ' +
+        (canToggle ? 'text-gray-300 cursor-pointer' : 'text-gray-600 cursor-not-allowed'),
+      title: canToggle ? undefined : 'Requires Operator-level sign-on or higher',
+      'aria-label': 'Out of Service toggle'
+    },
+      React.createElement('input', {
+        type: 'checkbox',
+        checked: !!checked,
+        disabled: !canToggle,
+        onChange: handleChange,
+        className: 'w-3.5 h-3.5 accent-gray-400 ' + (canToggle ? 'cursor-pointer' : 'cursor-not-allowed')
+      }),
+      'Out of Service'
+    );
+  }
+
   // ─── Main Sidebar Component ────────────────────────────────────────────────
   function PointSidebar({ pointId }) {
     const [pointState, setPointState] = useState(null);
@@ -238,8 +281,12 @@ const EBIPointSidebar = (function() {
     // Derive status flags
     const alarmActive = pointState.alarmState && pointState.alarmState.lifecycle === 'active';
     const faultActive = false; // Fault is derived from FaultEngine, separate from alarm state
-    const overridden = pointState.mode === 'Manual';
     const outOfService = pointState.outOfService;
+    // Per the SymmetrE Operator Manual's point-detail screenshots, "Overridden"
+    // reflects the program's control being overridden by the operator in
+    // either of the two ways that's possible: Manual mode (Outputs/Values) or
+    // Out of Service (any point type, and the only override path Inputs have).
+    const overridden = pointState.mode === 'Manual' || outOfService;
 
     return React.createElement('div', {
       className: 'w-48 bg-gray-900 border-r border-gray-700 p-4 flex flex-col items-center',
@@ -266,6 +313,11 @@ const EBIPointSidebar = (function() {
       // Mode indicator
       React.createElement(ModeIndicator, {
         mode: pointState.mode
+      }),
+      // Out of Service toggle
+      React.createElement(OutOfServiceToggle, {
+        pointId: pointId,
+        checked: outOfService
       })
     );
   }

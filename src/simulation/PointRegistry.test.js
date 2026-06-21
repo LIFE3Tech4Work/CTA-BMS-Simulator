@@ -16,7 +16,7 @@ function loadPointRegistry() {
     'utf-8'
   );
   const window = {};
-  const console = { error: vi.fn(), log: vi.fn() };
+  const console = { error: vi.fn(), log: vi.fn(), warn: vi.fn() };
   const fn = new Function('window', 'console', code);
   fn(window, console);
   return window.PointRegistry;
@@ -152,14 +152,44 @@ describe('PointRegistry', () => {
       expect(registry.getValue('AI301@DEV4004')).toBe(60.0);
     });
 
-    it('should set mode to Manual when source is operator', () => {
-      registry.setValue('AI301@DEV4004', 60.0, 'operator');
-      const meta = registry.getMetadata('AI301@DEV4004');
+    it('should set mode to Manual when source is operator (Output point)', () => {
+      registry.setValue('AO102@DEV4004', 70.0, 'operator');
+      const meta = registry.getMetadata('AO102@DEV4004');
       expect(meta.mode).toBe('Manual');
     });
 
     it('should not crash on unknown address', () => {
       expect(() => registry.setValue('UNKNOWN', 10, 'simulation')).not.toThrow();
+    });
+
+    it('should allow operator writes to an Input once it is Out of Service', () => {
+      registry.setOutOfService('AI301@DEV4004', true);
+      registry.setValue('AI301@DEV4004', 99.0, 'operator');
+      expect(registry.getValue('AI301@DEV4004')).toBe(99.0);
+    });
+  });
+
+  describe('setOutOfService', () => {
+    it('should set outOfService to true', () => {
+      registry.setOutOfService('AI301@DEV4004', true);
+      expect(registry.getMetadata('AI301@DEV4004').outOfService).toBe(true);
+    });
+
+    it('should set outOfService back to false', () => {
+      registry.setOutOfService('AI301@DEV4004', true);
+      registry.setOutOfService('AI301@DEV4004', false);
+      expect(registry.getMetadata('AI301@DEV4004').outOfService).toBe(false);
+    });
+
+    it('should not crash on unknown address', () => {
+      expect(() => registry.setOutOfService('UNKNOWN', true)).not.toThrow();
+    });
+
+    it('should notify subscribers when Out of Service changes', () => {
+      const callback = vi.fn();
+      registry.subscribe('AI301@DEV4004', callback);
+      registry.setOutOfService('AI301@DEV4004', true);
+      expect(callback).toHaveBeenCalled();
     });
   });
 
@@ -319,6 +349,14 @@ describe('PointRegistry', () => {
     });
 
     it('should not update points in Manual mode', () => {
+      registry.setValue('AO102@DEV4004', 99.0, 'operator');
+      registry.interpolate(3, 0);
+      // Should remain at 99.0, not data[2] = 48
+      expect(registry.getValue('AO102@DEV4004')).toBe(99.0);
+    });
+
+    it('should not update points that are Out of Service', () => {
+      registry.setOutOfService('AI301@DEV4004', true);
       registry.setValue('AI301@DEV4004', 99.0, 'operator');
       registry.interpolate(3, 0);
       // Should remain at 99.0, not data[2] = 55.1

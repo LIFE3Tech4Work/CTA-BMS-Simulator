@@ -29,10 +29,15 @@
   const ICON_COLORS = {
     urgent: '#FF0000',   // Red
     high: '#FFBF00',     // Amber
-    low: '#3B82F6'       // Blue
+    low: '#3B82F6',      // Blue
+    journal: '#9CA3AF'   // Gray — journal alarms are logged, not summary-displayed
   };
 
-  // Alarm types derived from fault rules for analog/binary points
+  // Alarm types derived from fault rules for analog/binary points.
+  // NOTE: F-02 and F-05 were previously mislabeled here — 'Deviation' and
+  // 'Rate of Change' are real Honeywell alarm types, but neither actually
+  // describes what FaultEngine.js's F-02/F-05 conditions check. Relabeled
+  // to match the real logic rather than the aspirational original framing.
   const ALARM_CONFIGS_BY_RULE = {
     'F-01': {
       alarmType: 'PV High',
@@ -41,8 +46,8 @@
       enabled: true
     },
     'F-02': {
-      alarmType: 'Deviation',
-      description: 'Supply air temperature deviation',
+      alarmType: 'PV High / PV Low',
+      description: 'Supply air temperature outside fixed 52–58°F design band (not a deviation from a live setpoint)',
       deadband: 2,
       enabled: true
     },
@@ -59,14 +64,14 @@
       enabled: true
     },
     'F-05': {
-      alarmType: 'Rate of Change',
-      description: 'Economizer not active when OAT permits',
+      alarmType: 'Composite (multi-point)',
+      description: 'Mechanical cooling running while free-cooling conditions are available and OA damper is not fully open — a compound AND across CT status, OAT, and damper position, not a single-point rate-of-change calculation',
       deadband: 5,
       enabled: true
     },
     'F-06': {
       alarmType: 'PV High',
-      description: 'CO2 exceeds ventilation threshold',
+      description: 'CO2 exceeds ventilation threshold (>1,100 ppm)',
       deadband: 50,
       enabled: true
     }
@@ -74,12 +79,12 @@
 
   // Threshold values from fault rule conditions
   const ALARM_THRESHOLDS = {
-    'F-01': 20,    // PHT/CHW > 20%
-    'F-02': 5,     // |SAT - SAT_SP| > 5°F
-    'F-03': 1,     // Fan running (binary)
-    'F-04': 5,     // OA damper < 5%
-    'F-05': 50,    // OA damper < 50%
-    'F-06': 800    // CO2 > 800 ppm
+    'F-01': 20,                  // PHT/CHW > 20%
+    'F-02': '52–58°F (band)',    // outside fixed band, not setpoint-relative
+    'F-03': 1,                   // Fan running (binary)
+    'F-04': 5,                   // OA damper < 5%
+    'F-05': 80,                  // OA damper < 80% (was incorrectly listed as 50)
+    'F-06': 1100                 // CO2 > 1,100 ppm (ASHRAE 62.1 upper guideline)
   };
 
   // ─── 9-State Alarm Icon Component ──────────────────────────────────────────

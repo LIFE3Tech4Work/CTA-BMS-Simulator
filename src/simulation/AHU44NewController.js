@@ -19,6 +19,24 @@
  * Data flow:
  *   Controls Sidebar (WRITES) → window.AHU44NewState → Graphic (READS)
  *
+ * oaDamperPosition is a true Manual-able output (added per the BMS Slide
+ * Companion lecture review): once set via setValue('oaDamperPosition', ...),
+ * recalculate() holds that exact value instead of recomputing it from the
+ * economizer/CO2 DCV sequence — mirroring a real BACnet AO going Manual,
+ * where the program no longer has authority over the point until it's
+ * released. This is what makes it possible to literally reproduce the real
+ * AHU-4-4 screenshot's own fault pattern (215 CFM actual OA vs. a 4,900 CFM
+ * configured minimum — see AHU44NewFaultEngine.js's N-04), which recurs
+ * independently across multiple lecture case studies (AHU-159, the VAV box
+ * overview, Exercise 1) as one of the most common real-world waste patterns.
+ * Downstream values (oaCFM, exhaustDamperPct, mixedAirTemp) still recompute
+ * normally FROM whatever oaDamperPosition currently is, manual or not — a
+ * stuck-low damper should visibly starve OA CFM, that's the whole point.
+ * Scope note: this only takes effect while the fan is running (fanRunning
+ * still forces the damper to 0 on a schedule/fire-alarm shutdown, regardless
+ * of any manual command) — modeling a damper physically held open against a
+ * stopped fan is a different, more unusual fault and is out of scope here.
+ *
  * Exposed as:
  *   window.AHU44NewController — public API { getState, setValue, subscribe, recalculate }
  *   window.AHU44NewState      — shared state object (read by graphic)
@@ -29,8 +47,8 @@
 
   // ─── Design Constants ───────────────────────────────────────────────────────
 
-  var DESIGN_CFM = 16500;          // Rated max supply airflow at 100% fan speed
-  var RETURN_AIR_TEMP = 75;        // Assumed return air temperature (°F)
+  var DESIGN_CFM = 11400;          // Rated max supply airflow at 100% fan speed — calibrated so 75% setpoint yields ~8550 CFM, matching Honeywell screenshot reference (Hotel_AHU4_4Edit.png)
+  var RETURN_AIR_TEMP = 72.0;      // Assumed return air temperature (°F) — corrected to match screenshot's live RF-4-7 reading (was 75)
   var OA_DAMPER_FLOOR = 20;        // Minimum damper position (%) per ASHRAE 62.1
 
   // ─── Shared State Object ────────────────────────────────────────────────────
@@ -44,13 +62,13 @@
     coolingCoilSetpoint: 60.0,     // °F
     heatingCoilSetpoint: 55.0,     // °F
     plenumMinSetpoint: 40.0,       // °F — freeze protection
-    oaTemperature: 83.4,           // °F
-    lowOATLockout: true,           // Low OAT lockout (ON in screenshot)
-    oaEnthalpy: 32.0,             // BTU/lb
+    oaTemperature: 83.4,           // °F — TMY3-driven (live weather), not operator-editable; see WEATHER_DRIVEN_KEYS
+    lowOATLockout: false,          // Low OAT lockout — OFF per Honeywell screenshot reference (Hotel_AHU4_4Edit.png)
+    oaEnthalpy: 32.0,             // BTU/lb — TMY3-driven (live weather), not operator-editable; see WEATHER_DRIVEN_KEYS
     enthalpyOKForEconomizer: false, // Enthalpy permits economizer
     economizerMinPosition: 20,     // % — OA damper floor
     minPositionFanSpeedLock: 5,    // %
-    economizerTempControlSP: 52.0, // °F
+    economizerTempControlSP: 58.0, // °F — corrected to match Honeywell screenshot reference (was 52.0)
     co2Sensor: 538,                // PPM
     co2Setpoint: 900,              // PPM
     minOAAirflowSetpoint: 4900,    // CFM
@@ -68,7 +86,7 @@
     // ═══ OUTPUTS (calculated — READ-ONLY on diagram) ═════════════════════════
     fanRunning: true,
     fanSpeed: 75,                  // % actual
-    cfm: 12375,                    // Supply air CFM
+    cfm: 8550,                     // Supply air CFM — corrected design point to match Honeywell screenshot (was 16500 max → 12375 calc'd)
     oaCFM: 4900,                   // Outside air CFM (min OA)
     oaDamperPosition: 20,          // %
     economizerActive: false,
@@ -77,7 +95,7 @@
     supplyAirTemp: 60.0,           // °F — discharge air temp
     preheatTemp: 72.9,             // °F — after preheat coil
     mixedAirTemp: 75.0,            // °F — mixed air
-    returnAirTemp: 75.0,           // °F — return air
+    returnAirTemp: 72.0,           // °F — return air. Corrected from hardcoded 75.0 to match screenshot's live RF-4-7 reading (72.0°F); still a static seed, see returnAirTemp note in recalculate()
     supplyStaticPressure: 87.6,    // % (kBn reading)
     returnStaticPressure: 80.0,    // %
     chwSupplyTemp: 41.8,           // °F
@@ -92,6 +110,16 @@
   window.AHU44NewState = state;
 
   var subscribers = [];
+
+  // Tracks which keys have been manually set by an operator via the
+  // Controls Sidebar — mirrors PointRegistry.js's point.mode concept and the
+  // real SymmetrE convention of flagging manually-set values with an "M"
+  // badge (see the Overview guide's trend display: "87.0°C M"). Only keys
+  // actually passed to setValue() ever appear here. Most flagged keys are
+  // operator setpoints (inputs); oaDamperPosition is the one output field
+  // that can also be flagged — see the Manual-output note in the file
+  // header for why recalculate() honors that flag instead of overwriting it.
+  var modes = {};
 
   // ─── Engineering Calculations ───────────────────────────────────────────────
 
@@ -117,23 +145,36 @@
     state.economizerActive = false;
 
     if (state.fanRunning) {
-      if (state.oaTemperature < state.economizerTempControlSP &&
-          state.enthalpyOKForEconomizer &&
-          !state.lowOATLockout) {
-        state.economizerActive = true;
-        state.oaDamperPosition = 100;
-      } else {
-        state.oaDamperPosition = Math.max(state.economizerMinPosition, OA_DAMPER_FLOOR);
-      }
+      var oaDamperManual = modes.oaDamperPosition === 'Manual';
 
-      // CO₂ DCV override
-      if (state.co2Sensor > state.co2Setpoint && !state.economizerActive) {
-        var co2Excess = state.co2Sensor - state.co2Setpoint;
-        var co2DamperCommand = Math.min(100, state.economizerMinPosition + (co2Excess / 5));
-        state.oaDamperPosition = Math.round(co2DamperCommand);
-      }
+      if (!oaDamperManual) {
+        if (state.oaTemperature < state.economizerTempControlSP &&
+            state.enthalpyOKForEconomizer &&
+            !state.lowOATLockout) {
+          state.economizerActive = true;
+          state.oaDamperPosition = 100;
+        } else {
+          state.oaDamperPosition = Math.max(state.economizerMinPosition, OA_DAMPER_FLOOR);
+        }
 
-      // OA CFM based on damper position
+        // CO₂ DCV override
+        if (state.co2Sensor > state.co2Setpoint && !state.economizerActive) {
+          var co2Excess = state.co2Sensor - state.co2Setpoint;
+          var co2DamperCommand = Math.min(100, state.economizerMinPosition + (co2Excess / 5));
+          state.oaDamperPosition = Math.round(co2DamperCommand);
+        }
+      }
+      // else: oaDamperPosition holds whatever value the operator manually
+      // forced it to — the sequence above (economizer changeover, CO2 DCV)
+      // no longer has authority over this point, same as a real BACnet AO
+      // in Manual. economizerActive correctly stays false in this branch:
+      // the program isn't actually driving free cooling anymore, regardless
+      // of what the damper position number happens to read.
+
+      // OA CFM based on damper position — always recomputed from whatever
+      // oaDamperPosition currently is, manual override or not. A damper
+      // manually stuck near 0% should visibly starve OA CFM; that's the
+      // literal fault this Manual capability exists to make reachable.
       state.oaCFM = Math.round(state.minOAAirflowSetpoint * (state.oaDamperPosition / state.economizerMinPosition));
       state.oaCFM = Math.min(state.oaCFM, state.cfm);
     } else {
@@ -216,11 +257,50 @@
     return Object.assign({}, state);
   }
 
+  // Keys that are purely TMY3-driven and may never be set via the sidebar.
+  // Outdoor air temperature is real weather, not an operator setpoint — a
+  // building engineer cannot type in what it is outside, so this point has
+  // no Manual mode. (Distinct from points like coolingCoilSetpoint, which
+  // ARE legitimately operator-editable.)
+  var WEATHER_DRIVEN_KEYS = { oaTemperature: true, oaEnthalpy: true };
+
   function setValue(key, value) {
+    if (WEATHER_DRIVEN_KEYS[key]) {
+      console.warn('[AHU44NewController] "' + key + '" is TMY3-driven and cannot be set manually. Ignored.');
+      return;
+    }
     if (state.hasOwnProperty(key)) {
       state[key] = value;
+      modes[key] = 'Manual';
       recalculate();
     }
+  }
+
+  /**
+   * Returns a shallow copy of which state keys are currently flagged Manual.
+   * Use: window.AHU44NewController.getModes()[stateKey] === 'Manual'
+   */
+  function getModes() {
+    return Object.assign({}, modes);
+  }
+
+  /**
+   * Push live TMY3 weather into the controller for the current simulation tick.
+   * Always applies — outdoor air temperature has no manual override in this
+   * controller (see WEATHER_DRIVEN_KEYS / setValue above).
+   *
+   * @param {number} row - current simulation row (1-indexed)
+   * @param {number} fraction - interpolation fraction between row and row+1 (0-1)
+   */
+  function updateFromTMY3(row, fraction) {
+    if (!window.TMY3Projector || !window.TMY3Projector.interpolateWeather) return;
+
+    var weather = window.TMY3Projector.interpolateWeather(row, fraction);
+    if (!weather) return;
+
+    state.oaTemperature = weather.dryBulb;
+    state.oaEnthalpy = weather.enthalpy;
+    recalculate();
   }
 
   function subscribe(callback) {
@@ -241,6 +321,8 @@
     setValue: setValue,
     subscribe: subscribe,
     recalculate: recalculate,
+    updateFromTMY3: updateFromTMY3,
+    getModes: getModes,
   };
 
 })();

@@ -18,12 +18,13 @@
 
   var LAYOUT_CONFIGS = {
     companion: { mainWidth: '70%', panelWidth: '30%' },
+    freeExplore: { mainWidth: '100%', panelWidth: '0%' },
     capstone: { mainWidth: '65%', panelWidth: '35%' }
   };
 
   // ─── Valid Modes ────────────────────────────────────────────────────────────
 
-  var VALID_MODES = ['companion', 'capstone'];
+  var VALID_MODES = ['companion', 'freeExplore', 'capstone'];
 
   // ─── Mode Controller ───────────────────────────────────────────────────────
 
