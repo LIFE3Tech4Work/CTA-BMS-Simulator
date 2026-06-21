@@ -210,14 +210,15 @@ function AlarmsScreen() {
 }
 
 function ScheduleScreen() {
-  const [selectedSchedule, setSelectedSchedule] = useState('AHU-4-4');
+  const [selectedSchedule, setSelectedSchedule] = useState('AHU-4-4_NEW');
   const [activeTab, setActiveTab] = useState('weekly');
 
-  // System Configuration tree data (schedulable objects)
+  // System Configuration tree data (schedulable objects) — matches the two
+  // current Station tabs (AHU-4-4_NEW, AHU-23-1). Legacy AHU-4-4/AHU-4-6 and
+  // the demo-only AHU-9-2 fault schedule have been removed.
   const scheduleTree = [
-    { id: 'AHU-4-4', label: 'AHU-4-4 Schedule', parent: null },
-    { id: 'AHU-4-6', label: 'AHU-4-6 Schedule', parent: null },
-    { id: 'AHU-9-2', label: 'AHU-9-2 Schedule', parent: null }
+    { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW Schedule', parent: null },
+    { id: 'AHU-23-1', label: 'AHU-23-1 Schedule', parent: null }
   ];
 
   // Tree item renderer
@@ -231,12 +232,7 @@ function ScheduleScreen() {
     },
       // Calendar icon
       React.createElement('span', { className: 'text-base' }, '📅'),
-      React.createElement('span', null, item.label),
-      // Fault indicator for AHU-9-2
-      item.id === 'AHU-9-2' && React.createElement('span', {
-        className: 'ml-auto inline-block w-2 h-2 rounded-full bg-red-500',
-        title: 'Scheduling fault detected'
-      })
+      React.createElement('span', null, item.label)
     );
   }
 
@@ -271,9 +267,7 @@ function ScheduleScreen() {
       React.createElement('div', { className: 'px-4 py-3 bg-gray-750 border-b border-gray-600 flex items-center justify-between' },
         React.createElement('div', null,
           React.createElement('h2', { className: 'text-white font-bold text-lg' }, selectedSchedule + ' Schedule'),
-          React.createElement('p', { className: 'text-gray-400 text-xs mt-0.5' },
-            selectedSchedule === 'AHU-9-2' ? 'Fault condition: 24/7 active (never turns off)' : 'Normal operating pattern'
-          )
+          React.createElement('p', { className: 'text-gray-400 text-xs mt-0.5' }, 'Normal operating pattern')
         ),
         // Back to SymmetrE button
         React.createElement('button', {
