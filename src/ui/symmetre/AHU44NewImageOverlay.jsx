@@ -75,8 +75,14 @@ const AHU44NewImageOverlay = (() => {
       x: 8.78, y: 53.37, w: 3.46, h: 1.83 },
     { id: 'oaDamper', stateKey: 'oaDamperPosition', label: 'OA Damper', units: '%', live: true,
       x: 14.84, y: 63.09, w: 2.6, h: 1.6 },
-    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F', live: true,
+    { id: 'mixedAirTemp', stateKey: 'mixedAirTemp', label: 'Mixed Air Temp', units: '°F', live: true,
       x: 24.61, y: 52.91, w: 3.09, h: 1.94 },
+    // preheatTemp: shown in the OA plenum section, BEFORE the return-air mixing point.
+    // The "72.9°F" on the real Honeywell screenshot (erased from image in v4) was
+    // mixedAirTemp, not preheatTemp. preheatTemp at default 83.4°F OAT = 83.4°F
+    // (no heating above the 55°F setpoint), which is correct but different.
+    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F', live: true,
+      x: 18.49, y: 52.91, w: 3.09, h: 1.94 },
     { id: 'phtValve', stateKey: 'phtValvePosition', label: 'Heating Valve', units: '%', live: true,
       x: 40.07, y: 67.66, w: 1.67, h: 1.83 },
     { id: 'chwValve', stateKey: 'chwValvePosition', label: 'Cooling Valve', units: '%', live: true,
