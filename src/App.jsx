@@ -125,7 +125,7 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHU23ControlsSidebar, null)
               : (params.ahuId === 'AHU-4-6' && window.AHU46ControlsSidebar)
               ? React.createElement(window.AHU46ControlsSidebar, null)
-              : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVControlsSidebar)
+              : (params.ahuId === 'VAV-4-4-02' && window.VAVControlsSidebar)
               ? React.createElement(window.VAVControlsSidebar, { zoneId: params.ahuId })
               : (window.ControlsSidebar
                 ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
@@ -144,7 +144,7 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHUImageOverlay, { ahuId: 'AHU-23-1' })
               : (params.ahuId === 'AHU-4-6' && window.AHU46ImageOverlay)
               ? React.createElement(window.AHU46ImageOverlay, null)
-              : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVGraphic)
+              : (params.ahuId === 'VAV-4-4-02' && window.VAVGraphic)
               ? React.createElement(window.VAVGraphic, { zoneId: params.ahuId })
               : (window.AHUGraphic
                 ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
@@ -153,7 +153,6 @@ function SymmetreScreen({ params }) {
                     React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
                   )),
             (window.SimultaneousHeatCool &&
-           params.ahuId !== 'VAV-4-4-01' &&
            params.ahuId !== 'VAV-4-4-02' &&
            params.ahuId !== 'AHU-4-6')
               ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
@@ -456,7 +455,7 @@ function App() {
         window.AHU44NewFaultEngine.evaluate(window.AHU44NewController.getState());
       }
 
-      // VAV-4-4-01/02 are downstream of AHU-4-4_NEW: push the AHU's current
+      // VAV-4-4-02 (Ballroom) is downstream of AHU-4-4_NEW: push the AHU's current
       // discharge air temp into each zone (this is what makes "Excessive
       // Reheat" a real, connected fault rather than an isolated number —
       // see VAVController.js's header), then evaluate each zone's fault

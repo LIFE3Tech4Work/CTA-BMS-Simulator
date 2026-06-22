@@ -98,76 +98,138 @@ const AHU46ImageOverlay = (() => {
       x: 17.5, y: 36.5, w: 3.5, h: 2.0 },
   ];
 
+  // ─── Alarm key map ──────────────────────────────────────────────────────────
+  // Builds a map of stateKey → [ruleId, ...] from AHU46FaultEngine's M-series
+  // rules (M-01..M-04). Same pattern as AHU44NewImageOverlay's buildAlarmKeyMap,
+  // but referencing window.AHU46FaultEngine — the N-series rules on AHU-4-4_NEW
+  // cover completely different operating conditions (economizer changeover temp,
+  // supply fan VFD, simultaneous heat/cool) and would not be meaningful here.
+
+  function buildAlarmKeyMap() {
+    var map = {};
+    var engine = window.AHU46FaultEngine;
+    if (!engine || !engine.rules) return map;
+    engine.rules.forEach(function(rule) {
+      (rule.relatedStateKeys || []).forEach(function(key) {
+        if (!map[key]) map[key] = [];
+        map[key].push(rule.id);
+      });
+    });
+    return map;
+  }
+
   // ─── Hotspot component ──────────────────────────────────────────────────────
 
   function Hotspot({ spot }) {
-    const [value, setValue] = useState(null);
-    const [isManual, setIsManual] = useState(false);
-    const [isAlarming, setIsAlarming] = useState(false);
+    var ctrl = window.AHU46Controller;
+    var initialState = window.AHU46State || (ctrl ? ctrl.getState() : {});
+    var [value, setValue] = useState(spot.live === false ? null : initialState[spot.stateKey]);
+    var [isManual, setIsManual] = useState(false);
+    var [isAlarming, setIsAlarming] = useState(false);
 
     useEffect(function() {
-      var ctrl = window.AHU46Controller;
+      if (spot.live === false) return;
       if (!ctrl) return;
-
       var unsub = ctrl.subscribe(function(s) {
         setValue(s[spot.stateKey]);
         if (ctrl.getModes) {
           setIsManual(ctrl.getModes()[spot.stateKey] === 'Manual');
         }
       });
+      return unsub;
+    }, [spot.stateKey, spot.live]);
 
-      // Check for active alarms on this field
-      var alarmInterval = setInterval(function() {
-        if (window.AHU46FaultEngine) {
-          var alarms = window.AHU46FaultEngine.getActiveAlarms();
-          setIsAlarming(alarms.some(function(a) { return a.sourceField === spot.stateKey; }));
-        }
-      }, 500);
+    // Only poll the fault engine for hotspots whose stateKey actually appears
+    // in an M-series rule's relatedStateKeys — avoids unnecessary work on
+    // fields like preheatTemp or returnAirTemp that no fault rule references.
+    useEffect(function() {
+      if (spot.live === false) return;
+      var alarmKeyMap = buildAlarmKeyMap();
+      var relatedRuleIds = alarmKeyMap[spot.stateKey];
+      if (!relatedRuleIds || relatedRuleIds.length === 0) return;
 
-      return function() { unsub(); clearInterval(alarmInterval); };
-    }, [spot.stateKey]);
+      function checkAlarms() {
+        var engine = window.AHU46FaultEngine;
+        if (!engine || !engine.getActiveAlarms) return;
+        var active = engine.getActiveAlarms();
+        var matches = active.some(function(a) { return relatedRuleIds.indexOf(a.condition) !== -1; });
+        setIsAlarming(matches);
+      }
 
-    if (!spot.live) {
+      checkAlarms();
+      var interval = setInterval(checkAlarms, 1500);
+      return function() { clearInterval(interval); };
+    }, [spot.stateKey, spot.live]);
+
+    // Static reference marker
+    if (spot.live === false) {
       return React.createElement('div', {
-        className: 'absolute flex items-center',
+        className: 'absolute flex items-center justify-center rounded ' +
+          'bg-amber-950/60 border border-amber-500/40 ' +
+          'text-[8px] sm:text-[9px] font-mono text-amber-200/80 ' +
+          'shadow pointer-events-none select-none',
         style: {
           left: spot.x + '%', top: spot.y + '%',
           width: spot.w + '%', height: spot.h + '%',
+          minWidth: '36px', minHeight: '14px',
         },
-        title: spot.label + ' (reference — static screenshot value, not live)',
+        title: spot.label + ': ' + spot.refValue + (spot.units ? ' ' + spot.units : '') +
+          ' — reference value from source screenshot, not simulated',
+        'aria-label': spot.label + ' ' + spot.refValue + ' ' + spot.units + ' (reference, not live)',
+        role: 'note',
       },
-        React.createElement('span', {
-          className: 'text-[9px] font-mono text-amber-300 bg-black bg-opacity-60 px-1 rounded pointer-events-none'
-        }, spot.refValue + ' ' + spot.units)
+        React.createElement('span', null, spot.refValue + (spot.units ? ' ' + spot.units : ''))
       );
     }
 
-    function formatValue(v) {
-      if (v === null || v === undefined) return '--';
-      if (typeof v === 'boolean') return v ? 'ON' : 'OFF';
-      if (typeof v === 'number') return v.toFixed(1);
-      return String(v);
+    // Format display value
+    var display = '--';
+    if (value !== null && value !== undefined) {
+      if (typeof value === 'boolean') {
+        display = value ? 'ON' : 'OFF';
+      } else if (typeof value === 'number') {
+        if (spot.stateKey === 'cfm' || spot.stateKey === 'oaCFM') {
+          display = Math.round(value).toLocaleString();
+        } else {
+          display = value.toFixed(1);
+        }
+      } else {
+        display = String(value);
+      }
     }
 
+    // Color-coded background: boolean ON → green, OFF → red, numeric → dark cyan
+    var bgClass = 'bg-black/70 border-cyan-500/50';
+    if (typeof value === 'boolean') {
+      bgClass = value
+        ? 'bg-green-900/80 border-green-400/70'
+        : 'bg-red-900/70 border-red-400/50';
+    }
+
+    // Alarm ring + flash when an M-series rule referencing this field is active
+    var alarmClass = isAlarming ? ' ring-2 ring-red-500 animate-bms-flash' : '';
+
     return React.createElement('div', {
-      className: 'absolute flex items-center gap-0.5',
+      className: 'absolute flex items-center justify-center rounded ' +
+        bgClass + alarmClass + ' border ' +
+        'text-[9px] sm:text-[10px] font-mono text-white font-bold ' +
+        'shadow-lg pointer-events-none select-none',
       style: {
         left: spot.x + '%', top: spot.y + '%',
         width: spot.w + '%', height: spot.h + '%',
+        minWidth: '40px', minHeight: '16px',
       },
-      title: spot.label +
-        (isManual ? ' — MANUAL OVERRIDE (M)' : ' — auto') +
-        (isAlarming ? ' — ALARM ACTIVE' : ''),
+      title: spot.label + ': ' + display + (spot.units ? ' ' + spot.units : '') +
+        (isManual ? ' (Manual override)' : '') +
+        (isAlarming ? ' — ALARM ACTIVE' : '') + ' (read-only)',
+      'aria-label': spot.label + ' ' + display + ' ' + spot.units +
+        (isManual ? ' manual override' : '') + (isAlarming ? ' alarm active' : ''),
+      role: 'status',
     },
-      React.createElement('span', {
-        className: 'text-[9px] font-mono px-1 rounded pointer-events-none ' +
-          (isAlarming ? 'bg-red-600 text-white font-bold' :
-            isManual ? 'bg-amber-900 text-amber-200 border border-amber-500' :
-              'text-white bg-black bg-opacity-60')
-      }, formatValue(value) + (spot.units ? ' ' + spot.units : '')),
+      React.createElement('span', null, display + (spot.units ? ' ' + spot.units : '')),
       isManual && React.createElement('span', {
-        className: 'text-[9px] font-bold text-amber-400 bg-amber-900 bg-opacity-80 border border-amber-500 rounded px-0.5',
-        title: 'Manually set from Controls Sidebar (not simulation-driven)'
+        className: 'ml-0.5 text-amber-300',
+        title: 'Manually set from Controls Sidebar (not simulation-driven)',
       }, 'M')
     );
   }

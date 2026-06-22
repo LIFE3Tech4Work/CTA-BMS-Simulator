@@ -19,7 +19,6 @@
     { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
     { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW', icon: '🌀', route: '#/symmetre/AHU-4-4_NEW', isZone: false },
     { id: 'AHU-23-1', label: 'AHU-23-1', icon: '🌀', route: '#/symmetre/AHU-23-1', isZone: false },
-    { id: 'VAV-4-4-01', label: 'VAV-4-4-01 (Pre-Function)', icon: '🌬️', route: '#/symmetre/VAV-4-4-01', isZone: false },
     { id: 'VAV-4-4-02', label: 'VAV-4-4-02 (Ballroom)', icon: '🌬️', route: '#/symmetre/VAV-4-4-02', isZone: false }
   ];
 
@@ -157,9 +156,7 @@
     useEffect(function () {
       function syncFromHash() {
         var hash = window.location.hash || '';
-        if (hash.indexOf('VAV-4-4-01') !== -1) {
-          setActiveTab('VAV-4-4-01');
-        } else if (hash.indexOf('VAV-4-4-02') !== -1) {
+        if (hash.indexOf('VAV-4-4-02') !== -1) {
           setActiveTab('VAV-4-4-02');
         } else if (hash.indexOf('AHU-4-4_NEW') !== -1) {
           setActiveTab('AHU-4-4_NEW');

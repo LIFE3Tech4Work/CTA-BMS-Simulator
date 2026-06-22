@@ -161,7 +161,6 @@
     { id: 'AHU-4-4', label: 'AHU-4-4 (legacy, no graphic)', parent: 'all' },
     { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW', parent: 'all' },
     { id: 'AHU-4-6', label: 'AHU-4-6', parent: 'all' },
-    { id: 'VAV-4-4-01', label: 'VAV-4-4-01 (Pre-Function)', parent: 'all' },
     { id: 'VAV-4-4-02', label: 'VAV-4-4-02 (Ballroom)', parent: 'all' },
     { id: 'Outdoor', label: 'Outdoor', parent: 'all' }
   ];
@@ -472,7 +471,7 @@
             engineAlarms = engineAlarms.concat(window.AHU44NewFaultEngine.getAllAlarms());
           }
 
-          // VAV-4-4-01/02 alarms come from a third engine, one zone at a
+          // VAV-4-4-02 alarms come from a third engine, one zone at a
           // time (VAVFaultEngine is multi-instance, keyed by zoneId — see
           // VAVController.js for why two zones share one module). Each
           // alarm already carries subsystem = zoneId.
@@ -623,7 +622,7 @@
         if (window.AHU44NewFaultEngine && typeof window.AHU44NewFaultEngine.acknowledge === 'function') {
           window.AHU44NewFaultEngine.acknowledge(alarm.condition, auth.operator || 'operator');
         }
-      } else if (alarm.subsystem === 'VAV-4-4-01' || alarm.subsystem === 'VAV-4-4-02') {
+      } else if (alarm.subsystem === 'VAV-4-4-02') {
         if (window.VAVFaultEngine && typeof window.VAVFaultEngine.acknowledge === 'function') {
           window.VAVFaultEngine.acknowledge(alarm.subsystem, alarm.condition, auth.operator || 'operator');
         }

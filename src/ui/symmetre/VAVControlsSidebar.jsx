@@ -4,7 +4,7 @@
  * Follows the same visual/interaction conventions as
  * AHU44NewControlsSidebar.jsx (click-to-edit numeric rows, toggle rows,
  * read-only calculated outputs), parameterized by `zoneId` since
- * VAVController.js manages two zone instances (VAV-4-4-01, VAV-4-4-02)
+ * VAVController.js manages one zone instance (VAV-4-4-02)
  * through one shared module rather than one file per zone.
  *
  * Note: unlike AHU44NewControlsSidebar.jsx (recreated from an actual
