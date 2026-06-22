@@ -150,16 +150,59 @@ const SymmetreAppChrome = (function() {
           window.SimulationEngine.jumpToDate(window.SimulationEngine.BASE_DATE);
           window.SimulationEngine.pause();
         }
-        // Reset all points to Auto mode so interpolation resumes from base data
+        // Reset PointRegistry-driven points to Auto mode
         if (window.PointRegistry && window.PointRegistry.points) {
           window.PointRegistry.points.forEach(function(point) {
             point.mode = 'Auto';
           });
-          // Trigger one interpolation pass to reset values from data arrays
           if (window.PointRegistry.interpolate) {
             window.PointRegistry.interpolate(1, 0);
           }
         }
+        // Reset AHU-4-4 formula-driven controller to starting values
+        (function() {
+          var ctrl = window.AHU44NewController;
+          if (!ctrl) return;
+          var defaults = {
+            runSchedule:             true,
+            systemStarting:          false,
+            startingTimeSetpoint:    240,
+            coolingCoilSetpoint:     60.0,
+            heatingCoilSetpoint:     55.0,
+            plenumMinSetpoint:       40.0,
+            lowOATLockout:           false,
+            enthalpyOKForEconomizer: false,
+            economizerMinPosition:   20,
+            minPositionFanSpeedLock: 5,
+            economizerTempControlSP: 58.0,
+            co2Sensor:               538,
+            co2Setpoint:             900,
+            minOAAirflowSetpoint:    4900,
+            fanSpeedSetpoint:        75,
+            fireAlarmShutdown:       false,
+            fireAlarmSmokePurge:     false,
+            interlockOn:             true,
+            exhaustFanOn:            true,
+            commonDamperOpen:        true,
+            freezePumpOn:            true,
+            oaDamperPosition:        20,
+          };
+          Object.keys(defaults).forEach(function(key) {
+            ctrl.setValue(key, defaults[key]);
+          });
+          if (ctrl.clearModes) ctrl.clearModes();
+          ctrl.recalculate();
+          // Also clear fault engine alarms
+          var engine = window.AHU44NewFaultEngine;
+          if (engine && engine.reset) engine.reset();
+        })();
+        // Reset VAV controller manual overrides
+        (function() {
+          var ctrl = window.VAVController;
+          if (!ctrl) return;
+          if (ctrl.clearModes) ctrl.clearModes();
+          if (ctrl.resetToDefaults) ctrl.resetToDefaults();
+        })();
       } else if (id === 'back') {
         window.history.back();
       } else if (id === 'forward') {
