@@ -4,7 +4,7 @@
  * Displays a Day/Time/Value table showing the weekly schedule pattern.
  * Columns: Day of Week, Start Time, End Time, Value (Active/Inactive)
  *
- * AHU-4-4_NEW and AHU-23-1: Normal pattern — weekday 08:00–18:00 Active
+ * AHU-4-4 and AHU-23-1: Normal pattern — weekday 08:00–18:00 Active
  *
  * Functional buttons: Insert (add row), Modify (edit selected row), Delete (remove row)
  *
@@ -16,7 +16,7 @@ const WeeklySchedule = (() => {
   const { useState, useContext } = React;
 
   // Default schedule data for each AHU — currently the same weekday
-  // 08:00–18:00 occupied pattern for both AHU-4-4_NEW and AHU-23-1.
+  // 08:00–18:00 occupied pattern for both AHU-4-4 and AHU-23-1.
   function getDefaultSchedule(scheduleId) {
     return [
       { id: 1, day: 'Monday', startTime: '08:00:00', endTime: '18:00:00', value: 'Active', isFault: false },
@@ -33,7 +33,7 @@ const WeeklySchedule = (() => {
     const auth = useContext(window.AuthContext);
     const canModify = auth && auth.canModifySchedules ? auth.canModifySchedules() : false;
 
-    const [entries, setEntries] = useState(() => getDefaultSchedule(scheduleId || 'AHU-4-4_NEW'));
+    const [entries, setEntries] = useState(() => getDefaultSchedule(scheduleId || 'AHU-4-4'));
     const [selectedRow, setSelectedRow] = useState(null);
     const [showInsertModal, setShowInsertModal] = useState(false);
     const [showModifyModal, setShowModifyModal] = useState(false);
@@ -46,7 +46,7 @@ const WeeklySchedule = (() => {
 
     // Reset entries when scheduleId changes
     React.useEffect(() => {
-      setEntries(getDefaultSchedule(scheduleId || 'AHU-4-4_NEW'));
+      setEntries(getDefaultSchedule(scheduleId || 'AHU-4-4'));
       setSelectedRow(null);
     }, [scheduleId]);
 
