@@ -8,7 +8,7 @@
  * Editable controls that drive the AHU46Controller state model.
  * Changing values here recalculates outputs shown on the diagram.
  *
- * Key difference from AHU-4-4_NEW sidebar: Minimum Position defaults to 60%
+ * Key difference from AHU-4-4 sidebar: Minimum Position defaults to 60%
  * (meeting-room ASHRAE 62.1 ventilation requirement, vs 20% for the
  * Pre-Function/Ballroom). Min OA Airflow Active SP is 4500 CFM (vs 4900).
  *
@@ -158,7 +158,7 @@ const AHU46ControlsSidebar = (() => {
     );
   }
 
-  // ─── LL97 Panel (import from shared component, same as AHU-4-4_NEW) ─────────
+  // ─── LL97 Panel (import from shared component, same as AHU-4-4) ─────────
 
   // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -232,7 +232,7 @@ const AHU46ControlsSidebar = (() => {
       React.createElement(EditableRow, { label: 'Fan Speed Setpoint', stateKey: 'fanSpeedSetpoint', units: '%', min: 0, max: 100 }),
       React.createElement(ReadOnlyRow, { label: 'Return Fan Track Mode', stateKey: 'fanTrackMode', units: '' }),
 
-      // CALCULATED OUTPUTS — OA Damper Position is Manual-able (same as AHU-4-4_NEW)
+      // CALCULATED OUTPUTS — OA Damper Position is Manual-able (same as AHU-4-4)
       React.createElement(SectionHeader, { title: 'Calculated Outputs' }),
       React.createElement(ReadOnlyRow, { label: 'Fan Status', stateKey: 'fanRunning', units: '',
         format: function(v) { return v ? '● RUNNING' : '○ STOPPED'; } }),

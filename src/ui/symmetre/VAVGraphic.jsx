@@ -72,7 +72,7 @@ const VAVGraphic = (() => {
 
     return React.createElement('div', { className: 'p-6 text-white' },
       React.createElement('h2', { className: 'text-lg font-bold mb-1' }, zoneId + ' — ' + zoneLabel),
-      React.createElement('p', { className: 'text-xs text-gray-500 mb-4' }, 'Served by AHU-4-4_NEW (functional schematic, not a recreated screen)'),
+      React.createElement('p', { className: 'text-xs text-gray-500 mb-4' }, 'Served by AHU-4-4 (functional schematic, not a recreated screen)'),
 
       // ─── Fault banners ───────────────────────────────────────────────────
       hasExcessiveReheatFault
@@ -95,7 +95,7 @@ const VAVGraphic = (() => {
       React.createElement('svg', { viewBox: '0 0 640 160', className: 'w-full max-w-2xl border border-gray-700 rounded bg-gray-900 mb-4' },
         // Inlet duct (from AHU)
         React.createElement('rect', { x: 10, y: 60, width: 120, height: 40, fill: '#1f2937', stroke: '#6b7280' }),
-        React.createElement('text', { x: 70, y: 50, fill: '#9ca3af', fontSize: 11, textAnchor: 'middle' }, 'FROM AHU-4-4_NEW'),
+        React.createElement('text', { x: 70, y: 50, fill: '#9ca3af', fontSize: 11, textAnchor: 'middle' }, 'FROM AHU-4-4'),
         React.createElement('text', { x: 70, y: 85, fill: '#e5e7eb', fontSize: 13, textAnchor: 'middle', fontWeight: 'bold' },
           (typeof state.dischargeAirTemp === 'number' ? state.dischargeAirTemp.toFixed(1) : '--') + '°F'),
 

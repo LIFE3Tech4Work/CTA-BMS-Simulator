@@ -1,5 +1,5 @@
 /**
- * AHU44NewControlsSidebar.jsx — Interactive Honeywell-style Controls for AHU-4-4_NEW
+ * AHU44NewControlsSidebar.jsx — Interactive Honeywell-style Controls for AHU-4-4
  *
  * Recreated from Honeywell SymmetrE / TecSystems screenshot.
  * Service: Pre-Function / Ballroom Level 2, Location: Level 4
@@ -187,7 +187,7 @@ const AHU44NewControlsSidebar = (() => {
         className: 'flex items-center justify-between px-2 py-1 border-b border-gray-400',
         style: { backgroundColor: '#7fb3d4' }
       },
-        React.createElement('span', { className: 'text-[11px] font-bold text-gray-800' }, 'Controls — AHU-4-4_NEW'),
+        React.createElement('span', { className: 'text-[11px] font-bold text-gray-800' }, 'Controls — AHU-4-4'),
         React.createElement('button', {
           className: 'text-xs text-gray-600 hover:text-black', onClick: function() { setCollapsed(true); }
         }, '◀')
@@ -257,13 +257,61 @@ const AHU44NewControlsSidebar = (() => {
       React.createElement(NormToggleRow, { label: 'Shutdown', stateKey: 'fireAlarmShutdown' }),
       React.createElement(NormToggleRow, { label: 'Smoke Purge', stateKey: 'fireAlarmSmokePurge' }),
 
-      // ALARM RESET
-      React.createElement(SectionHeader, { title: 'Alarm Reset' }),
-      React.createElement('div', { className: 'px-2 py-1' },
+      // ALARM RESET + FULL RESET
+      React.createElement(SectionHeader, { title: 'Reset' }),
+      React.createElement('div', { className: 'px-2 py-2 flex flex-col gap-2' },
+
+        // Alarm Reset — clears acknowledged alarms only
         React.createElement('button', {
-          className: 'px-3 py-1 text-[10px] bg-gray-200 border border-gray-400 rounded hover:bg-gray-300 text-gray-800 font-bold',
-          onClick: function() { /* Reset alarms placeholder */ }
-        }, 'RESET')
+          className: 'w-full px-3 py-1 text-[10px] bg-gray-200 border border-gray-400 rounded hover:bg-gray-300 text-gray-800 font-bold',
+          onClick: function() {
+            var engine = window.AHU44NewFaultEngine;
+            if (engine && typeof engine.acknowledgeAll === 'function') {
+              engine.acknowledgeAll('operator');
+            }
+          }
+        }, 'ALARM RESET'),
+
+        // Reset All to Defaults — clears every manual override and restores starting values
+        React.createElement('button', {
+          className: 'w-full px-3 py-1 text-[10px] bg-amber-100 border border-amber-500 rounded hover:bg-amber-200 text-amber-900 font-bold',
+          title: 'Clear all manual overrides and restore default setpoints',
+          onClick: function() {
+            var ctrl = window.AHU44NewController;
+            if (!ctrl) return;
+            // Restore every editable setpoint to its starting value
+            var defaults = {
+              runSchedule:            true,
+              systemStarting:         false,
+              startingTimeSetpoint:   240,
+              coolingCoilSetpoint:    60.0,
+              heatingCoilSetpoint:    55.0,
+              plenumMinSetpoint:      40.0,
+              lowOATLockout:          false,
+              enthalpyOKForEconomizer: false,
+              economizerMinPosition:  20,
+              minPositionFanSpeedLock: 5,
+              economizerTempControlSP: 58.0,
+              co2Sensor:              538,
+              co2Setpoint:            900,
+              minOAAirflowSetpoint:   4900,
+              fanSpeedSetpoint:       75,
+              fireAlarmShutdown:      false,
+              fireAlarmSmokePurge:    false,
+              interlockOn:            true,
+              exhaustFanOn:           true,
+              commonDamperOpen:       true,
+              freezePumpOn:           true,
+              oaDamperPosition:       20,
+            };
+            Object.keys(defaults).forEach(function(key) {
+              ctrl.setValue(key, defaults[key]);
+            });
+            // Clear all manual mode flags so M badges disappear
+            if (ctrl.clearModes) ctrl.clearModes();
+            ctrl.recalculate();
+          }
+        }, '↺  RESET ALL TO DEFAULTS')
       )
     );
   }

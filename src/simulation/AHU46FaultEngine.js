@@ -3,7 +3,7 @@
  *
  * Mirrors AHU44NewFaultEngine.js's rule pattern, adapted for the Meeting
  * Room 2nd Level AHU. Fault rule IDs use the M-series prefix (M-01..M-04)
- * to distinguish from AHU-4-4_NEW's N-series rules.
+ * to distinguish from AHU-4-4's N-series rules.
  *
  * M-01: Supply air too warm — cooling coil cannot maintain setpoint
  * M-02: CO₂ exceeds 1,100 ppm (ASHRAE 62.1 upper guideline)
@@ -11,7 +11,7 @@
  * M-04: OA damper below ASHRAE 62.1 minimum (60% for meeting rooms)
  *        Note: the 60% floor makes this fault pedagogically distinct —
  *        a damper stuck at 30% on this unit starves 2× more fresh air
- *        than the same fault would on AHU-4-4_NEW (20% floor).
+ *        than the same fault would on AHU-4-4 (20% floor).
  *
  * Attached to window.AHU46FaultEngine (no import/export — Babel standalone).
  */

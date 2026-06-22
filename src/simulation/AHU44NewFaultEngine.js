@@ -1,12 +1,12 @@
 /**
- * AHU44NewFaultEngine.js — Fault detection engine for AHU-4-4_NEW
+ * AHU44NewFaultEngine.js — Fault detection engine for AHU-4-4
  *
- * AHU-4-4_NEW is driven by AHU44NewController.js's own formula-driven state
+ * AHU-4-4 is driven by AHU44NewController.js's own formula-driven state
  * object, NOT by PointRegistry/BACnet addresses. The legacy FaultEngine.js
  * rules F-02/F-03/F-04/F-06 (all DEV4004-scoped) only ever evaluate against
  * PointRegistry's historical-data points, which belong to the deprecated
- * AHU-4-4 tab — they never see anything a student does on the AHU-4-4_NEW
- * screen, and AHU-4-4_NEW never sees them. This module closes that gap with
+ * AHU-4-4 tab — they never see anything a student does on the AHU-4-4
+ * screen, and AHU-4-4 never sees them. This module closes that gap with
  * a small rule set written directly against AHU44NewController's state.
  *
  * Two of the original ruleset's fault patterns (F-03: fan running while
@@ -100,7 +100,7 @@
   // ─── Core Methods ───────────────────────────────────────────────────────────
 
   /**
-   * Evaluate all AHU-4-4_NEW fault rules against the controller's current state.
+   * Evaluate all AHU-4-4 fault rules against the controller's current state.
    * Called on each simulation tick with window.AHU44NewController.getState().
    *
    * @param {Object} state - AHU44NewController state object
@@ -126,7 +126,7 @@
           var alarm = {
             id: rule.id + '_' + Date.now(),
             timestamp: new Date(),
-            source: rule.sourceField + '@AHU-4-4_NEW',
+            source: rule.sourceField + '@AHU-4-4',
             condition: rule.id,
             priority: rule.priority,
             description: rule.description,
@@ -135,7 +135,7 @@
             acknowledged: false,
             operator: '',
             action: '',
-            subsystem: 'AHU-4-4_NEW'
+            subsystem: 'AHU-4-4'
           };
 
           activeAlarms.set(rule.id, alarm);
@@ -181,6 +181,13 @@
     activeAlarms.clear();
   }
 
+  function acknowledgeAll(operator) {
+    activeAlarms.forEach(function(alarm) {
+      alarm.acknowledged = true;
+      alarm.operator = operator || '';
+    });
+  }
+
   // ─── Expose as window global ────────────────────────────────────────────────
 
   window.AHU44NewFaultEngine = {
@@ -191,6 +198,7 @@
     getActiveAlarms: getActiveAlarms,
     getAllAlarms: getAllAlarms,
     acknowledge: acknowledge,
+    acknowledgeAll: acknowledgeAll,
     reset: reset,
 
     _reset: function () {

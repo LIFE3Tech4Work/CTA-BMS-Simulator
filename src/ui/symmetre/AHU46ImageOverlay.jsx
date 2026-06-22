@@ -13,7 +13,7 @@
  * v1 image note: certain independent-variable setpoint numbers from the
  * original screenshot are baked into the image (4500 CFM, 58.0°F, 55.0°F
  * active setpoints). These should be erased in a future image-editing pass
- * (same methodology as AHU-4-4_NEW's v1→v4 progression) — added to the
+ * (same methodology as AHU-4-4's v1→v4 progression) — added to the
  * next-steps list but not blocking the initial build.
  *
  * Constant values on the image (leave as-is, no hotspot overlay):
@@ -101,7 +101,7 @@ const AHU46ImageOverlay = (() => {
   // ─── Alarm key map ──────────────────────────────────────────────────────────
   // Builds a map of stateKey → [ruleId, ...] from AHU46FaultEngine's M-series
   // rules (M-01..M-04). Same pattern as AHU44NewImageOverlay's buildAlarmKeyMap,
-  // but referencing window.AHU46FaultEngine — the N-series rules on AHU-4-4_NEW
+  // but referencing window.AHU46FaultEngine — the N-series rules on AHU-4-4
   // cover completely different operating conditions (economizer changeover temp,
   // supply fan VFD, simultaneous heat/cool) and would not be meaningful here.
 
@@ -272,7 +272,7 @@ const AHU46ImageOverlay = (() => {
       }, '⚠ M-04 OA damper below 60% minimum — meeting-room ventilation shortfall'),
 
       // Background image — sized by width (h-auto) so hotspot % positions always
-      // match the actual rendered image area; same fix applied to AHU-4-4_NEW in v3.
+      // match the actual rendered image area; same fix applied to AHU-4-4 in v3.
       React.createElement('img', {
         src: IMAGE_SRC,
         alt: 'AHU-4-6 — Honeywell SymmetrE / TecSystems AHU Schematic (Meeting Room 2nd Level)',

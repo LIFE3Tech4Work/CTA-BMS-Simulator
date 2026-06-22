@@ -50,15 +50,7 @@ function parseRoute(hash) {
   const parts = cleaned.split('/');
 
   if (parts[0] === 'symmetre') {
-    var ahuId = parts[1] || 'AHU-4-4_NEW';
-    // AHU-4-4 is deprecated — redirect any stale link, bookmark, or direct
-    // URL to the supported AHU-4-4_NEW view rather than resolving to the old
-    // data-driven component. AHU-4-6 is a separate AHU, not part of this
-    // deprecation, and is intentionally left untouched (its tab is currently
-    // commented out in ZoneTabs.jsx — a pre-existing state, not changed here).
-    if (ahuId === 'AHU-4-4') {
-      ahuId = 'AHU-4-4_NEW';
-    }
+    var ahuId = parts[1] || 'AHU-4-4';
     return { screen: 'symmetre', params: { ahuId: ahuId } };
   }
   if (parts[0] === 'ebi') {
@@ -119,7 +111,7 @@ function SymmetreScreen({ params }) {
             className: 'h-full flex-shrink-0 overflow-y-auto border-r border-gray-700 bg-gray-800',
             style: { width: params.ahuId === 'AHU-23-1' ? '280px' : '250px' }
           },
-            (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewControlsSidebar)
+            (params.ahuId === 'AHU-4-4' && window.AHU44NewControlsSidebar)
               ? React.createElement(window.AHU44NewControlsSidebar, null)
               : (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
               ? React.createElement(window.AHU23ControlsSidebar, null)
@@ -128,7 +120,7 @@ function SymmetreScreen({ params }) {
               : (params.ahuId === 'VAV-4-4-02' && window.VAVControlsSidebar)
               ? React.createElement(window.VAVControlsSidebar, { zoneId: params.ahuId })
               : (window.ControlsSidebar
-                ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
+                ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4' })
                 : null),
             // LL97 Panel at bottom of sidebar — AHU-4-6 sidebar includes it
             // directly via window.LL97Panel; all other tabs inject it here
@@ -138,7 +130,7 @@ function SymmetreScreen({ params }) {
           ),
           // AHU Graphic area (scrollable)
           React.createElement('div', { className: 'flex-1 relative overflow-auto bg-gray-900' },
-            (params.ahuId === 'AHU-4-4_NEW' && window.AHU44NewImageOverlay)
+            (params.ahuId === 'AHU-4-4' && window.AHU44NewImageOverlay)
               ? React.createElement(window.AHU44NewImageOverlay, null)
               : (params.ahuId === 'AHU-23-1' && window.AHUImageOverlay)
               ? React.createElement(window.AHUImageOverlay, { ahuId: 'AHU-23-1' })
@@ -147,15 +139,15 @@ function SymmetreScreen({ params }) {
               : (params.ahuId === 'VAV-4-4-02' && window.VAVGraphic)
               ? React.createElement(window.VAVGraphic, { zoneId: params.ahuId })
               : (window.AHUGraphic
-                ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
+                ? React.createElement(window.AHUGraphic, { ahuId: params.ahuId || 'AHU-4-4' })
                 : React.createElement('div', { className: 'text-center' },
                     React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
-                    React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
+                    React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
                   )),
             (window.SimultaneousHeatCool &&
            params.ahuId !== 'VAV-4-4-02' &&
            params.ahuId !== 'AHU-4-6')
-              ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
+              ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4' })
               : null
           )
         )
@@ -165,7 +157,7 @@ function SymmetreScreen({ params }) {
     bmsContent = React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-800 text-white' },
       React.createElement('div', { className: 'text-center' },
         React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
-        React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
+        React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4'))
       )
     );
   }
@@ -217,14 +209,14 @@ function AlarmsScreen() {
 }
 
 function ScheduleScreen() {
-  const [selectedSchedule, setSelectedSchedule] = useState('AHU-4-4_NEW');
+  const [selectedSchedule, setSelectedSchedule] = useState('AHU-4-4');
   const [activeTab, setActiveTab] = useState('weekly');
 
   // System Configuration tree data (schedulable objects) — matches the two
-  // current Station tabs (AHU-4-4_NEW, AHU-23-1). Legacy AHU-4-4/AHU-4-6 and
+  // current Station tabs (AHU-4-4, AHU-23-1). Legacy AHU-4-4/AHU-4-6 and
   // the demo-only AHU-9-2 fault schedule have been removed.
   const scheduleTree = [
-    { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW Schedule', parent: null },
+    { id: 'AHU-4-4', label: 'AHU-4-4 Schedule', parent: null },
     { id: 'AHU-23-1', label: 'AHU-23-1 Schedule', parent: null },
     { id: 'AHU-4-6', label: 'AHU-4-6 Schedule', parent: null }
   ];
@@ -446,7 +438,7 @@ function App() {
         window.FaultEngine.evaluate(valuesMap, { simHour: simHour });
       }
 
-      // AHU-4-4_NEW has its own formula-driven state (not PointRegistry/BACnet
+      // AHU-4-4 has its own formula-driven state (not PointRegistry/BACnet
       // addressed), so it needs its own fault evaluation — the legacy
       // FaultEngine above never sees it. See AHU44NewFaultEngine.js for why
       // F-03/F-04-style rules aren't ported 1:1.
@@ -455,7 +447,7 @@ function App() {
         window.AHU44NewFaultEngine.evaluate(window.AHU44NewController.getState());
       }
 
-      // VAV-4-4-02 (Ballroom) is downstream of AHU-4-4_NEW: push the AHU's current
+      // VAV-4-4-02 (Ballroom) is downstream of AHU-4-4: push the AHU's current
       // discharge air temp into each zone (this is what makes "Excessive
       // Reheat" a real, connected fault rather than an isolated number —
       // see VAVController.js's header), then evaluate each zone's fault
@@ -479,7 +471,7 @@ function App() {
       // LL97 energy/GHG accumulation — was never wired to the clock before
       // (pre-existing gap, not introduced here): LL97Accumulator.tick()
       // existed and was fully tested but nothing ever called it, so the
-      // LL97 panel always showed zero. AHU-4-4_NEW's TMY3-driven outdoor
+      // LL97 panel always showed zero. AHU-4-4's TMY3-driven outdoor
       // air temp is reused here as the seasonal-factor input — it's
       // already live weather data, no second weather source needed.
       if (window.LL97Accumulator && window.AHU44NewController &&

@@ -20,7 +20,7 @@
  * │ Interlock ON         → Related equipment interlocked                      │
  * └────────────────────────────────────────────────────────────────────────────┘
  *
- * Key structural difference from AHU-4-4_NEW: the OA_DAMPER_FLOOR is 60%,
+ * Key structural difference from AHU-4-4: the OA_DAMPER_FLOOR is 60%,
  * not 20%. Meeting rooms require significantly more fresh air per ASHRAE 62.1
  * than pre-function/ballroom spaces (higher design occupancy density), so the
  * configured minimum OA damper position is three times higher. At 60% minimum
@@ -28,9 +28,9 @@
  * the total supply of many smaller AHUs. This makes the N-04 ventilation
  * shortfall fault pedagogically distinct: a damper stuck at, say, 10% on
  * this unit starves a much larger fraction of required fresh air than the
- * same fault would on AHU-4-4_NEW.
+ * same fault would on AHU-4-4.
  *
- * oaDamperPosition is a true Manual-able output (same as AHU-4-4_NEW):
+ * oaDamperPosition is a true Manual-able output (same as AHU-4-4):
  * once set via setValue('oaDamperPosition', ...), recalculate() holds that
  * value instead of recomputing from the economizer/CO₂ DCV sequence.
  *
@@ -165,7 +165,7 @@
           state.oaDamperPosition = Math.round(co2DamperCommand);
         }
       }
-      // else: Manual hold — program yields authority (same as AHU-4-4_NEW)
+      // else: Manual hold — program yields authority (same as AHU-4-4)
 
       state.oaCFM = Math.round(state.minOAAirflowSetpoint * (state.oaDamperPosition / state.economizerMinPosition));
       state.oaCFM = Math.min(state.oaCFM, state.cfm);

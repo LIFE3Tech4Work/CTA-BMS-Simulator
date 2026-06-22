@@ -1,6 +1,6 @@
 /**
  * AHU44NewImageOverlay.jsx — Real Honeywell/TecSystems AHU graphic as background
- * image with READ-ONLY hotspot overlays for AHU-4-4_NEW.
+ * image with READ-ONLY hotspot overlays for AHU-4-4.
  *
  * Service: Pre-Function / Ballroom Level 2, Location: Level 4
  *
@@ -162,7 +162,7 @@ const AHU44NewImageOverlay = (() => {
       return unsub;
     }, [spot.stateKey, spot.live]);
 
-    // Poll the AHU-4-4_NEW fault engine for any active alarm tied to this
+    // Poll the AHU-4-4 fault engine for any active alarm tied to this
     // hotspot's stateKey. Only hotspots that actually appear in a fault
     // rule's relatedStateKeys do this work.
     useEffect(function() {
@@ -293,7 +293,7 @@ const AHU44NewImageOverlay = (() => {
       // would otherwise nudge the hotspot layer off by a hair.
       React.createElement('img', {
         src: IMAGE_SRC,
-        alt: 'AHU-4-4_NEW — Honeywell SymmetrE / TecSystems AHU Schematic (Pre-Function/Ballroom Level 2)',
+        alt: 'AHU-4-4 — Honeywell SymmetrE / TecSystems AHU Schematic (Pre-Function/Ballroom Level 2)',
         className: 'block w-full h-auto',
         draggable: false,
         style: { imageRendering: 'auto' },
@@ -302,7 +302,7 @@ const AHU44NewImageOverlay = (() => {
       // READ-ONLY hotspot overlay layer
       React.createElement('div', {
         className: 'absolute inset-0',
-        'aria-label': 'AHU-4-4_NEW live values — read-only display driven by Controls Sidebar',
+        'aria-label': 'AHU-4-4 live values — read-only display driven by Controls Sidebar',
         role: 'region',
       },
         HOTSPOTS.map(function(spot) {

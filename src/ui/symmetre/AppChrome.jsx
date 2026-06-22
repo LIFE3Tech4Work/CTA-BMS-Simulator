@@ -41,7 +41,7 @@ const SymmetreAppChrome = (function() {
     // Menu items with their dropdown options
     const MENU_DROPDOWNS = {
       'Station': [
-        { label: '🌀 AHU-4-4_NEW Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4_NEW'; } },
+        { label: '🌀 AHU-4-4 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4'; } },
         { label: '🌀 AHU-23-1 Overview', action: function() { window.location.hash = '#/symmetre/AHU-23-1'; } },
         { label: '🌀 AHU-4-6 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-6'; } },
         { label: '🌬️ VAV-4-4-02 (Ballroom) Overview', action: function() { window.location.hash = '#/symmetre/VAV-4-4-02'; } },
