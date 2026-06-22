@@ -97,6 +97,10 @@ async function main() {
   console.log(`Output: ${SCREENSHOT_DIR}\n`);
 
   const browser = await puppeteer.launch({
+    // 1. Add this new line to point to your Mac's Chrome application
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    
+    // 2. Keep your existing settings exactly as they were
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: VIEWPORT
