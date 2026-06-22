@@ -30,7 +30,12 @@ const AHU46ImageOverlay = (() => {
 
   const { useState, useEffect, useRef } = React;
 
-  const IMAGE_SRC = 'assets/AHU_4_6_Hotel.png';
+  // AHU_4_6_Hotel_1080p.png (1920×1080) — cropped from the original 3604×1452
+  // screenshot, which had blank white space in the right ~47% (the actual AHU
+  // display area occupied only the left 1920px). The full-width asset caused
+  // hotspot percentage positions to resolve into the blank white region.
+  // With this crop, x/y % positions map correctly to the visible diagram.
+  const IMAGE_SRC = 'assets/AHU_4_6_Hotel_1080p.png';
 
   // ─── TMY3 Weather Driver ────────────────────────────────────────────────────
 
@@ -60,37 +65,37 @@ const AHU46ImageOverlay = (() => {
   const HOTSPOTS = [
     // ── Live values ────────────────────────────────────────────────────────────
     { id: 'oaCfm',      stateKey: 'oaCFM',            label: 'OA Plenum CFM',  units: 'CFM', live: true,
-      x: 21.5, y: 51.0, w: 5.0, h: 1.8 },
+      x: 20.5, y: 52.0, w: 5.0, h: 1.8 },
     { id: 'oaDamper',   stateKey: 'oaDamperPosition',  label: 'OA Damper',      units: '%',   live: true,
-      x: 24.5, y: 63.0, w: 3.5, h: 1.6 },
+      x: 24.0, y: 63.5, w: 3.5, h: 1.6 },
     { id: 'mixedAirTemp', stateKey: 'mixedAirTemp',   label: 'Mixed Air Temp', units: '°F',  live: true,
-      x: 35.5, y: 51.5, w: 3.5, h: 1.8 },
+      x: 34.5, y: 52.0, w: 3.5, h: 1.8 },
     { id: 'phtTemp',    stateKey: 'preheatTemp',       label: 'Preheat Discharge', units: '°F', live: true,
-      x: 21.5, y: 43.5, w: 3.5, h: 1.8 },
+      x: 20.5, y: 44.5, w: 3.5, h: 1.8 },
     { id: 'phtValve',   stateKey: 'phtValvePosition',  label: 'Heating Valve',  units: '%',   live: true,
-      x: 42.5, y: 68.5, w: 3.0, h: 1.6 },
+      x: 41.0, y: 68.5, w: 3.0, h: 1.6 },
     { id: 'chwValve',   stateKey: 'chwValvePosition',  label: 'Cooling Valve',  units: '%',   live: true,
-      x: 50.0, y: 68.5, w: 3.0, h: 1.6 },
+      x: 49.0, y: 68.5, w: 3.0, h: 1.6 },
     { id: 'supplyCfm',  stateKey: 'cfm',               label: 'Supply CFM',     units: 'CFM', live: true,
-      x: 60.5, y: 51.5, w: 5.5, h: 1.8 },
+      x: 59.5, y: 52.0, w: 5.5, h: 1.8 },
     { id: 'fanStatus',  stateKey: 'fanRunning',         label: 'Fan Status',     units: '',    live: true,
-      x: 59.0, y: 41.5, w: 7.5, h: 6.0 },
+      x: 57.0, y: 41.5, w: 9.5, h: 6.0 },
     { id: 'interlock',  stateKey: 'interlockOn',        label: 'Interlock',      units: '',    live: true,
-      x: 59.0, y: 72.0, w: 7.5, h: 6.0 },
+      x: 57.0, y: 72.0, w: 9.5, h: 6.0 },
     { id: 'supplyAirRH',  stateKey: 'supplyStaticPressure', label: 'Supply Air %RH', units: '%RH', live: true,
-      x: 77.5, y: 42.5, w: 4.5, h: 1.8 },
+      x: 77.0, y: 42.5, w: 4.5, h: 1.8 },
     { id: 'supplyAirTemp', stateKey: 'supplyAirTemp',  label: 'Supply Air Temp', units: '°F', live: true,
-      x: 77.5, y: 51.5, w: 4.5, h: 1.8 },
+      x: 77.0, y: 52.0, w: 4.5, h: 1.8 },
     { id: 'returnAirTemp', stateKey: 'returnAirTemp',  label: 'Return Air Temp', units: '°F', live: true,
-      x: 72.0, y: 21.5, w: 4.0, h: 1.8 },
+      x: 70.5, y: 21.5, w: 4.0, h: 1.8 },
     { id: 'co2Sensor',  stateKey: 'co2Sensor',          label: 'CO₂ Sensor',     units: 'PPM', live: true,
-      x: 79.5, y: 21.5, w: 4.5, h: 1.8 },
+      x: 80.5, y: 21.5, w: 4.5, h: 1.8 },
     { id: 'freezePump', stateKey: 'freezePumpOn',       label: 'Freeze Pump',    units: '',    live: true,
-      x: 36.5, y: 69.5, w: 5.0, h: 2.0 },
+      x: 35.5, y: 69.5, w: 5.0, h: 2.0 },
     { id: 'exhaustDamper', stateKey: 'exhaustDamperPct', label: 'Exhaust Damper', units: '%', live: true,
-      x: 25.5, y: 32.5, w: 3.5, h: 1.6 },
+      x: 25.0, y: 33.5, w: 3.5, h: 1.6 },
     { id: 'commonDamper', stateKey: 'commonDamperOpen', label: 'Common Damper', units: '',    live: true,
-      x: 12.5, y: 36.5, w: 3.5, h: 2.0 },
+      x: 17.5, y: 36.5, w: 3.5, h: 2.0 },
   ];
 
   // ─── Hotspot component ──────────────────────────────────────────────────────

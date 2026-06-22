@@ -152,7 +152,10 @@ function SymmetreScreen({ params }) {
                     React.createElement('h1', { className: 'text-2xl font-bold' }, 'SymmetrE Station'),
                     React.createElement('p', { className: 'text-gray-400 mt-2' }, 'AHU: ' + (params.ahuId || 'AHU-4-4_NEW'))
                   )),
-            (window.SimultaneousHeatCool && params.ahuId !== 'VAV-4-4-01' && params.ahuId !== 'VAV-4-4-02')
+            (window.SimultaneousHeatCool &&
+           params.ahuId !== 'VAV-4-4-01' &&
+           params.ahuId !== 'VAV-4-4-02' &&
+           params.ahuId !== 'AHU-4-6')
               ? React.createElement(window.SimultaneousHeatCool, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
               : null
           )
