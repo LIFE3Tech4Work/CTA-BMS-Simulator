@@ -33,7 +33,7 @@ const AHU44NewImageOverlay = (() => {
 
   // ─── Image path ─────────────────────────────────────────────────────────────
 
-  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell_v3.png';
+  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell_v4.png';
 
   // ─── TMY3 Weather Driver ────────────────────────────────────────────────────
   // Pushes live TMY3 outdoor air temperature/enthalpy into AHU44NewController
@@ -56,7 +56,7 @@ const AHU44NewImageOverlay = (() => {
 
   // ─── Hotspot definitions ────────────────────────────────────────────────────
   // Positions as % of image width/height, measured directly against
-  // AHU_4_4_NEW_Honeywell_v3.png (1617×875, same dimensions as v2 — only
+  // AHU_4_4_NEW_Honeywell_v4.png (1617×875, same dimensions throughout —
   // pixel content changed, no resize), sourced from the Honeywell
   // SymmetrE screenshot (Hotel_AHU4_4Edit.png, Service: Pre-Function/Ballroom
   // Level 2, Location: Level 4). Each (x,y,w,h) was measured by cropping and
@@ -75,8 +75,14 @@ const AHU44NewImageOverlay = (() => {
       x: 8.78, y: 53.37, w: 3.46, h: 1.83 },
     { id: 'oaDamper', stateKey: 'oaDamperPosition', label: 'OA Damper', units: '%', live: true,
       x: 14.84, y: 63.09, w: 2.6, h: 1.6 },
-    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F', live: true,
+    { id: 'mixedAirTemp', stateKey: 'mixedAirTemp', label: 'Mixed Air Temp', units: '°F', live: true,
       x: 24.61, y: 52.91, w: 3.09, h: 1.94 },
+    // preheatTemp: shown in the OA plenum section, BEFORE the return-air mixing point.
+    // The "72.9°F" on the real Honeywell screenshot (erased from image in v4) was
+    // mixedAirTemp, not preheatTemp. preheatTemp at default 83.4°F OAT = 83.4°F
+    // (no heating above the 55°F setpoint), which is correct but different.
+    { id: 'phtTemp', stateKey: 'preheatTemp', label: 'Preheat Discharge', units: '°F', live: true,
+      x: 18.49, y: 52.91, w: 3.09, h: 1.94 },
     { id: 'phtValve', stateKey: 'phtValvePosition', label: 'Heating Valve', units: '%', live: true,
       x: 40.07, y: 67.66, w: 1.67, h: 1.83 },
     { id: 'chwValve', stateKey: 'chwValvePosition', label: 'Cooling Valve', units: '%', live: true,
@@ -104,32 +110,17 @@ const AHU44NewImageOverlay = (() => {
     { id: 'exhaustDamper', stateKey: 'exhaustDamperPct', label: 'Exhaust Damper', units: '%', live: true,
       x: 15.77, y: 32.91, w: 2.29, h: 1.49 },
 
-    // ── Static reference labels — real screenshot values, not yet modeled ───
-    // Freeze coils are shown as one combined preheatTemp in the controller;
-    // the screenshot has two independent coil readings (57.0°F / 56.5°F).
-    { id: 'freezeCoil1Ref', label: 'Freeze Coil 1 (reference)', units: '°F', live: false, refValue: '57.0',
-      x: 47.74, y: 59.89, w: 3.09, h: 1.71 },
-    { id: 'freezeCoil2Ref', label: 'Freeze Coil 2 (reference)', units: '°F', live: false, refValue: '56.5',
-      x: 47.74, y: 62.74, w: 3.09, h: 1.71 },
-    // Real building has a separate return fan (RF-4-7) with its own CFM/Hz —
-    // controller currently models one shared fan for supply+return.
-    { id: 'returnFanCfmRef', label: 'Return Fan CFM (reference)', units: 'CFM', live: false, refValue: '12,438',
-      x: 55.66, y: 22.17, w: 6.06, h: 1.6 },
-    { id: 'returnFanCfm2Ref', label: 'Return Fan CFM #2 (reference)', units: 'CFM', live: false, refValue: '8,102',
-      x: 58.01, y: 33.14, w: 3.71, h: 1.6 },
-    { id: 'returnFanHzRef', label: 'Return Fan Hz (reference)', units: 'Hz', live: false, refValue: '60',
-      x: 67.9, y: 33.14, w: 2.91, h: 1.6 },
-    { id: 'returnAirBtuRef', label: 'Return Air BTU (reference)', units: 'BTU', live: false, refValue: '28',
-      x: 72.48, y: 15.89, w: 2.66, h: 1.83 },
-    { id: 'returnAirRHRef', label: 'Return Air %RH (reference)', units: '%RH', live: false, refValue: '56.9',
-      x: 71.74, y: 18.86, w: 4.21, h: 1.94 },
-    // supplyAirRHRef removed — confirmed duplicate of supplyStatic (identical
-    // coordinates, identical value, both representing the same real "87.6%RH"
-    // screenshot field). supplyStatic is the one true source now, relabeled
-    // above to accurately describe what it shows.
-    // CHW flow (GPM) and branch-duct static (IWC) are not modeled at all yet.
-    { id: 'supplyDuctIwcRef', label: 'Supply Duct Static (reference)', units: 'IWC', live: false, refValue: '1.66',
-      x: 75.76, y: 52.57, w: 3.28, h: 2.06 },
+    // Static reference values (freeze coils, return fan, duct static) are
+    // left as baked text on the image — they're constant and the user
+    // confirmed constant values should remain on the image as-is with no
+    // hotspot overlay on top. Removing the former live: false hotspots that
+    // were doubling those constant values visually (Images 5 & 6 in the
+    // user's overlap report). The values are still visible on the diagram
+    // image itself:
+    //   57.0°F / 56.5°F — freeze coils (one combined preheatTemp in controller)
+    //   12,438 CFM / 8,102 CFM / 60 Hz — return fan RF-4-7 (separate unit)
+    //   28 BTU / 56.9%RH — return air properties
+    //   1.66 IWC — supply duct static pressure
   ];
 
   // ─── Alarm-related hotspot map ──────────────────────────────────────────────
