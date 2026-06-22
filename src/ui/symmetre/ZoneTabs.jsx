@@ -16,7 +16,7 @@
 
   const ZONE_TABS = [
     // { id: 'AHU-4-4', label: 'AHU-4-4', icon: '🌀', route: '#/symmetre/AHU-4-4', isZone: false },
-    // { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
+    { id: 'AHU-4-6', label: 'AHU-4-6', icon: '🌀', route: '#/symmetre/AHU-4-6', isZone: false },
     { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW', icon: '🌀', route: '#/symmetre/AHU-4-4_NEW', isZone: false },
     { id: 'AHU-23-1', label: 'AHU-23-1', icon: '🌀', route: '#/symmetre/AHU-23-1', isZone: false },
     { id: 'VAV-4-4-01', label: 'VAV-4-4-01 (Pre-Function)', icon: '🌬️', route: '#/symmetre/VAV-4-4-01', isZone: false },
@@ -108,6 +108,18 @@
         { label: 'CW SUPPLY', value: '75.2', units: '°F' },
         { label: 'CHW SUPPLY', value: '41.8', units: '°F' },
         { label: 'CHW FLOW', value: '1103', units: 'GPM' },
+      ];
+    } else if (ahuId === 'AHU-4-6') {
+      // Meeting Room 2nd Level — CW/CHW from AHU-4-6 screenshot status bar
+      items = [
+        { label: 'OA TEMPERATURE', value: weatherData ? fmt(weatherData.dryBulb) : '--.-', units: '°F' },
+        { label: 'OA HUMIDITY', value: weatherData ? fmt(weatherData.relHumidity) : '--.-', units: '%RH' },
+        { label: 'OA DEWPOINT', value: weatherData ? fmt(weatherData.dewPoint) : '--.-', units: '°F' },
+        { label: 'OA WETBULB', value: weatherData ? fmt(weatherData.wetBulb) : '--.-', units: '°F' },
+        { label: 'OA ENTHALPY', value: weatherData ? fmt(weatherData.enthalpy) : '--.-', units: 'BTU' },
+        { label: 'CW SUPPLY', value: '77.7', units: '°F' },
+        { label: 'CHW SUPPLY', value: '41.9', units: '°F' },
+        { label: 'CHW FLOW', value: '1192', units: 'GPM' },
       ];
     } else {
       items = [
