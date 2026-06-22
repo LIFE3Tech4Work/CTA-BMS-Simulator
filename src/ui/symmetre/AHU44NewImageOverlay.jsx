@@ -12,6 +12,18 @@
  * Image dimensions reference: ~1024 × 575 (approximate from screenshot aspect)
  *
  * No import/export — exposed as window.AHU44NewImageOverlay
+ *
+ * v3 image change (from v2): five independent-variable setpoint numbers
+ * (Cooling/Heating Coil Active SP, Economizer Temp Control SP, Min OA
+ * Airflow SP, CO2 Setpoint) were erased from the source image — these are
+ * already live, editable fields in AHU44NewControlsSidebar.jsx, so baking
+ * a frozen copy of the same number into the image risked the two silently
+ * disagreeing the moment an operator changed the sidebar value. The
+ * descriptive text labels (e.g. "ACTIVE SETPOINT (COOLING)") were kept;
+ * only the numbers themselves were removed. Also erased the "87.6%RH" /
+ * "60.0°F" pair that was duplicated by the supplyStatic/supplyAirRHRef
+ * hotspots (see below) — both already had a live overlay, but a
+ * semi-transparent hotspot box doesn't fully hide frozen text underneath.
  */
 
 const AHU44NewImageOverlay = (() => {
@@ -21,7 +33,7 @@ const AHU44NewImageOverlay = (() => {
 
   // ─── Image path ─────────────────────────────────────────────────────────────
 
-  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell_v2.png';
+  const IMAGE_SRC = 'assets/AHU_4_4_NEW_Honeywell_v3.png';
 
   // ─── TMY3 Weather Driver ────────────────────────────────────────────────────
   // Pushes live TMY3 outdoor air temperature/enthalpy into AHU44NewController
@@ -44,7 +56,8 @@ const AHU44NewImageOverlay = (() => {
 
   // ─── Hotspot definitions ────────────────────────────────────────────────────
   // Positions as % of image width/height, measured directly against
-  // AHU_4_4_NEW_Honeywell_v2.png (1617×875), sourced from the Honeywell
+  // AHU_4_4_NEW_Honeywell_v3.png (1617×875, same dimensions as v2 — only
+  // pixel content changed, no resize), sourced from the Honeywell
   // SymmetrE screenshot (Hotel_AHU4_4Edit.png, Service: Pre-Function/Ballroom
   // Level 2, Location: Level 4). Each (x,y,w,h) was measured by cropping and
   // gridding the source image at 2x zoom, not estimated by eye.
@@ -76,7 +89,7 @@ const AHU44NewImageOverlay = (() => {
       x: 60.11, y: 71.09, w: 11.01, h: 4.34 },
     { id: 'interlock', stateKey: 'interlockOn', label: 'Interlock', units: '', live: true,
       x: 57.02, y: 35.66, w: 13.98, h: 8.69 },
-    { id: 'supplyStatic', stateKey: 'supplyStaticPressure', label: 'Supply Static', units: '%', live: true,
+    { id: 'supplyStatic', stateKey: 'supplyStaticPressure', label: 'Supply Air %RH', units: '%RH', live: true,
       x: 71.43, y: 54.29, w: 4.64, h: 1.71 },
     { id: 'supplyAirTemp', stateKey: 'supplyAirTemp', label: 'Supply Air Temp / Active SP (Cooling)', units: '°F', live: true,
       x: 71.43, y: 56.69, w: 4.14, h: 1.83 },
@@ -110,8 +123,10 @@ const AHU44NewImageOverlay = (() => {
       x: 72.48, y: 15.89, w: 2.66, h: 1.83 },
     { id: 'returnAirRHRef', label: 'Return Air %RH (reference)', units: '%RH', live: false, refValue: '56.9',
       x: 71.74, y: 18.86, w: 4.21, h: 1.94 },
-    { id: 'supplyAirRHRef', label: 'Supply Air %RH (reference)', units: '%RH', live: false, refValue: '87.6',
-      x: 71.43, y: 54.29, w: 4.64, h: 1.71 },
+    // supplyAirRHRef removed — confirmed duplicate of supplyStatic (identical
+    // coordinates, identical value, both representing the same real "87.6%RH"
+    // screenshot field). supplyStatic is the one true source now, relabeled
+    // above to accurately describe what it shows.
     // CHW flow (GPM) and branch-duct static (IWC) are not modeled at all yet.
     { id: 'supplyDuctIwcRef', label: 'Supply Duct Static (reference)', units: 'IWC', live: false, refValue: '1.66',
       x: 75.76, y: 52.57, w: 3.28, h: 2.06 },
