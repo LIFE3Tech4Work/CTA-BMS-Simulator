@@ -43,6 +43,7 @@ const SymmetreAppChrome = (function() {
       'Station': [
         { label: '🌀 AHU-4-4_NEW Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-4_NEW'; } },
         { label: '🌀 AHU-23-1 Overview', action: function() { window.location.hash = '#/symmetre/AHU-23-1'; } },
+        { label: '🌀 AHU-4-6 Overview', action: function() { window.location.hash = '#/symmetre/AHU-4-6'; } },
         { label: '🌬️ VAV-4-4-01 (Pre-Function) Overview', action: function() { window.location.hash = '#/symmetre/VAV-4-4-01'; } },
         { label: '🌬️ VAV-4-4-02 (Ballroom) Overview', action: function() { window.location.hash = '#/symmetre/VAV-4-4-02'; } },
       ],

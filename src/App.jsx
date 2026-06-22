@@ -123,13 +123,16 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHU44NewControlsSidebar, null)
               : (params.ahuId === 'AHU-23-1' && window.AHU23ControlsSidebar)
               ? React.createElement(window.AHU23ControlsSidebar, null)
+              : (params.ahuId === 'AHU-4-6' && window.AHU46ControlsSidebar)
+              ? React.createElement(window.AHU46ControlsSidebar, null)
               : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVControlsSidebar)
               ? React.createElement(window.VAVControlsSidebar, { zoneId: params.ahuId })
               : (window.ControlsSidebar
                 ? React.createElement(window.ControlsSidebar, { ahuId: params.ahuId || 'AHU-4-4_NEW' })
                 : null),
-            // LL97 Panel at bottom of sidebar (scrolls with it)
-            window.LL97Panel
+            // LL97 Panel at bottom of sidebar — AHU-4-6 sidebar includes it
+            // directly via window.LL97Panel; all other tabs inject it here
+            (params.ahuId !== 'AHU-4-6' && window.LL97Panel)
               ? React.createElement(window.LL97Panel, null)
               : null
           ),
@@ -139,6 +142,8 @@ function SymmetreScreen({ params }) {
               ? React.createElement(window.AHU44NewImageOverlay, null)
               : (params.ahuId === 'AHU-23-1' && window.AHUImageOverlay)
               ? React.createElement(window.AHUImageOverlay, { ahuId: 'AHU-23-1' })
+              : (params.ahuId === 'AHU-4-6' && window.AHU46ImageOverlay)
+              ? React.createElement(window.AHU46ImageOverlay, null)
               : ((params.ahuId === 'VAV-4-4-01' || params.ahuId === 'VAV-4-4-02') && window.VAVGraphic)
               ? React.createElement(window.VAVGraphic, { zoneId: params.ahuId })
               : (window.AHUGraphic
@@ -218,7 +223,8 @@ function ScheduleScreen() {
   // the demo-only AHU-9-2 fault schedule have been removed.
   const scheduleTree = [
     { id: 'AHU-4-4_NEW', label: 'AHU-4-4_NEW Schedule', parent: null },
-    { id: 'AHU-23-1', label: 'AHU-23-1 Schedule', parent: null }
+    { id: 'AHU-23-1', label: 'AHU-23-1 Schedule', parent: null },
+    { id: 'AHU-4-6', label: 'AHU-4-6 Schedule', parent: null }
   ];
 
   // Tree item renderer
@@ -461,6 +467,11 @@ function App() {
             window.VAVFaultEngine.evaluate(zoneId, window.VAVController.getState(zoneId));
           }
         });
+      }
+
+      // AHU-4-6: push TMY3 weather into the Meeting Room controller on each tick
+      if (window.AHU46Controller && typeof window.AHU46Controller.updateFromTMY3 === 'function') {
+        window.AHU46Controller.updateFromTMY3(event.rowIndex, event.interpolationFraction || 0);
       }
 
       // LL97 energy/GHG accumulation — was never wired to the clock before
