@@ -104,7 +104,11 @@
     chwValveStatus: 'ON',
     supplyFanStatus: 'ON',
     returnFanStatus: 'ON',
-    exhaustDamperPct: 100,         // %
+    exhaustDamperPct: 100,         // % — tracks OA damper (balanced exhaust)
+    returnAirDamperPct: 80,        // % — inverse of OA damper (mixing box return air)
+    spillDamperPct: 100,           // % — DA-3 Spill Damper (N.O.): 100% when off, 0% at min OA
+    returnCFM: 7695,               // CFM — return fan flow (90% of supply per SOO CLC #6)
+    supplyRH: 55,                  // % — supply air relative humidity (SOO CLC #4 humidity model)
   };
 
   window.AHU44NewState = state;
@@ -141,7 +145,21 @@
       state.returnFanStatus = 'ON';
     }
 
-    // 2. ECONOMIZER LOGIC: OAT + Enthalpy OK → economizer active
+    // 2. ECONOMIZER LOGIC: Auto-calculate enthalpy eligibility (SOO CLC #2)
+    // AUTO: OA enthalpy < (Return air enthalpy − 5.0 BTU/lb) AND OA > 38°F
+    // DISABLE: OA enthalpy > (Return air enthalpy − 2.5 BTU/lb) OR OA < 35°F
+    // Return air enthalpy approximated from return air temp at ~50% RH:
+    //   h ≈ 0.240*T_rankine_offset — simplified: at 72°F/50%RH ≈ 28 BTU/lb
+    var returnAirEnthalpy = Math.max(15, 0.31 * RETURN_AIR_TEMP - 14.3);
+    if (modes.enthalpyOKForEconomizer !== 'Manual') {
+      if (state.oaEnthalpy < (returnAirEnthalpy - 5.0) && state.oaTemperature > 38) {
+        state.enthalpyOKForEconomizer = true;
+      } else if (state.oaEnthalpy > (returnAirEnthalpy - 2.5) || state.oaTemperature < 35) {
+        state.enthalpyOKForEconomizer = false;
+      }
+      // else: hysteresis band — hold current state
+    }
+
     state.economizerActive = false;
 
     if (state.fanRunning) {
@@ -182,8 +200,27 @@
       state.oaCFM = 0;
     }
 
-    // Exhaust damper follows OA damper
+    // ── Damper positions ─────────────────────────────────────────────────────
+    // DA-2: Return air damper is INVERSE of OA (SOO CLC #8: return closes as OA opens)
+    state.returnAirDamperPct = state.fanRunning ? Math.max(0, 100 - state.oaDamperPosition) : 0;
+
+    // DA-3: Spill damper (SOO points list: DA-3, Normally Open = N.O.)
+    // Fails OPEN when system is off (100%). When running at min OA, stays near 0%.
+    // Opens proportionally as fresh air demand exceeds minimum position.
+    if (!state.fanRunning) {
+      state.spillDamperPct = 100; // N.O. = fully open when system off
+    } else {
+      var extraOADemand = Math.max(0, state.oaDamperPosition - state.economizerMinPosition);
+      state.spillDamperPct = Math.min(100, Math.round(extraOADemand * 1.5));
+    }
+
+    // DA-1: Exhaust damper mirrors OA damper (balanced fresh/exhaust exchange)
     state.exhaustDamperPct = state.fanRunning ? state.oaDamperPosition : 0;
+
+    // ── Return fan flow tracking (SOO CLC #6) ────────────────────────────────
+    // Return fan VFD modulated to maintain return flow at 90% of supply flow
+    // Creates slight positive pressurization of served zones (SOO Page 8)
+    state.returnCFM = state.fanRunning ? Math.round(state.cfm * 0.90) : 0;
 
     // 3. HEATING LOGIC: Heating Coil SP → PHT valve %
     if (state.fanRunning) {
@@ -238,9 +275,39 @@
 
     // Round outputs
     state.supplyAirTemp = Math.round(state.supplyAirTemp * 10) / 10;
-    state.preheatTemp = Math.round(state.preheatTemp * 10) / 10;
-    state.mixedAirTemp = Math.round(state.mixedAirTemp * 10) / 10;
+    state.preheatTemp   = Math.round(state.preheatTemp   * 10) / 10;
+    state.mixedAirTemp  = Math.round(state.mixedAirTemp  * 10) / 10;
     state.returnAirTemp = RETURN_AIR_TEMP;
+
+    // ── Humidity model (SOO CLC #4) ──────────────────────────────────────────
+    // Return Air RH maintained at 50% by resetting SAT setpoint for CHW coil.
+    // When CHW valve is active, cooling coil removes moisture from the airstream.
+    // OA RH approximated from enthalpy (higher enthalpy = higher humidity content).
+    var oaRH = Math.min(95, Math.max(15, 15 + (state.oaEnthalpy - 13) * 2.8));
+    var oaFractionRH = state.oaDamperPosition / 100;
+    // Mixed air humidity before coils (blend of OA and return air streams)
+    var returnRH = 50; // SOO target: maintain return air at 50% RH
+    var mixedRH  = Math.round(oaFractionRH * oaRH + (1 - oaFractionRH) * returnRH);
+    // CHW coil dehumidification: cooling coil removes moisture proportional to valve position
+    // At 100% valve: up to 35% RH reduction (coil surface condensation = dehumidification)
+    var chwDehumid = Math.round((state.chwValvePosition / 100) * 35);
+    state.supplyRH = Math.max(10, Math.min(95, mixedRH - chwDehumid));
+
+    // ── Freeze protection dynamic setpoint (SOO CLC #1) ──────────────────────
+    // Minimum Plenum Temperature resets with OA temperature per schedule:
+    //   OaTemp = 60°F → MinPlenumTemp = 40°F
+    //   OaTemp = 40°F → MinPlenumTemp = 50°F
+    // Interpolate linearly between these points; cap at 50°F minimum
+    if (modes.plenumMinSetpoint !== 'Manual') {
+      var oat = state.oaTemperature;
+      if (oat >= 60) {
+        state.plenumMinSetpoint = 40;
+      } else if (oat <= 40) {
+        state.plenumMinSetpoint = 50;
+      } else {
+        state.plenumMinSetpoint = Math.round(50 - (oat - 40) * 0.5);
+      }
+    }
 
     notifySubscribers();
   }

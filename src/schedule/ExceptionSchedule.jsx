@@ -211,7 +211,7 @@ const ExceptionSchedule = (() => {
       // Security notice if can't modify
       !canModify && React.createElement('div', {
         className: 'px-3 py-2 bg-gray-800 border-t border-gray-600 text-xs text-yellow-400'
-      }, '⚠ Supervisor (Supv) or higher security level required to modify exception schedules.'),
+      }, '⚠ Schedule editing requires Supervisor (Supv) or higher security. For training: use the schedules shown for analysis only — identify what should change and why, then document as a recommendation.'),
 
       // Add modal
       showAddModal && renderAddModal()

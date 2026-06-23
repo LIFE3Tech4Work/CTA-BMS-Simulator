@@ -7,7 +7,7 @@
  * for the full design rationale.
  *
  * AHU_4_6_Hotel.png dimensions: 1920×1080
- *   Service: Meeting Room 2nd Level, Location: Level 4
+ *   Service: Pre-Function & Meeting Room, 2nd Level, Location: Level 4
  *   Source:  Honeywell SymmetrE R410.2, AHU-04-06.htm, 12-Jun-26 13:02:30
  *
  * v1 image note: certain independent-variable setpoint numbers from the
@@ -275,7 +275,7 @@ const AHU46ImageOverlay = (() => {
       // match the actual rendered image area; same fix applied to AHU-4-4 in v3.
       React.createElement('img', {
         src: IMAGE_SRC,
-        alt: 'AHU-4-6 — Honeywell SymmetrE / TecSystems AHU Schematic (Meeting Room 2nd Level)',
+        alt: 'AHU-4-6 — Honeywell SymmetrE / TecSystems AHU Schematic (Pre-Function & Meeting Room, 2nd Level)',
         className: 'block w-full h-auto',
         draggable: false,
       }),

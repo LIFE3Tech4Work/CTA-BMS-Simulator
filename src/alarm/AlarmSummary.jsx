@@ -419,21 +419,28 @@
   function AcknowledgeButton({ selectedAlarm, canAck, onAcknowledge }) {
     var disabled = !selectedAlarm || !canAck || selectedAlarm.acknowledged || selectedAlarm.lifecycle !== 'active';
 
-    return React.createElement('button', {
-      className: [
-        'px-3 py-1 text-xs rounded border',
-        disabled
-          ? 'border-gray-600 text-gray-500 cursor-not-allowed'
-          : 'border-blue-500 text-blue-300 hover:bg-blue-800 hover:text-white'
-      ].join(' '),
-      disabled: disabled,
-      onClick: function () {
-        if (!disabled && selectedAlarm) {
-          onAcknowledge(selectedAlarm);
-        }
-      },
-      title: disabled ? 'Select an active unacknowledged alarm (requires AckOnly+ security)' : 'Acknowledge selected alarm'
-    }, '✓ Acknowledge');
+    return React.createElement('div', { className: 'flex flex-col items-end' },
+      React.createElement('button', {
+        className: [
+          'px-3 py-1 text-xs rounded border',
+          disabled
+            ? 'border-gray-600 text-gray-500 cursor-not-allowed'
+            : 'border-blue-500 text-blue-300 hover:bg-blue-800 hover:text-white'
+        ].join(' '),
+        disabled: disabled,
+        onClick: function () {
+          if (!disabled && selectedAlarm) {
+            onAcknowledge(selectedAlarm);
+          }
+        },
+        title: disabled
+          ? 'Select an active unacknowledged alarm (requires AckOnly+ security)'
+          : 'Acknowledge selected alarm — this marks it as seen but does NOT resolve the underlying fault'
+      }, '✓ Acknowledge'),
+      React.createElement('span', { className: 'text-[9px] text-amber-400 mt-0.5' },
+        'Acknowledged ≠ fixed'
+      )
+    );
   }
 
   // ─── Main AlarmSummary Component ──────────────────────────────────────────────

@@ -264,7 +264,7 @@ const WeeklySchedule = (() => {
       // Security notice if can't modify
       !canModify && React.createElement('div', {
         className: 'px-3 py-2 bg-gray-800 border-t border-gray-600 text-xs text-yellow-400'
-      }, '⚠ Supervisor (Supv) or higher security level required to modify schedules.'),
+      }, '⚠ Schedule editing requires Supervisor (Supv) or higher security. For training: identify runtime waste (e.g. running at 1 AM on Sundays) and document the recommended fix.'),
 
       // Modals
       showInsertModal && renderModal('Insert Schedule Entry', confirmInsert, function() { setShowInsertModal(false); }),

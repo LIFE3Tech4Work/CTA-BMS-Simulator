@@ -212,20 +212,20 @@ const AHU46ControlsSidebar = (() => {
 
       // ECONOMIZER CONTROL
       React.createElement(SectionHeader, { title: 'Economizer Control' }),
-      React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Temp', stateKey: 'oaTemperature', units: '°F',
+      React.createElement(ReadOnlyRow, { label: 'OA Temp (Live)', stateKey: 'oaTemperature', units: '°F',
         format: function(v) { return (typeof v === 'number' ? v.toFixed(1) : '--') + ' (live)'; } }),
       React.createElement(ToggleRow, { label: 'Low OA Temp Lockout', stateKey: 'lowOATLockout' }),
-      React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Enthalpy', stateKey: 'oaEnthalpy', units: 'BTU' }),
-      React.createElement(ToggleRow, { label: 'Enthalpy OK For Economizer', stateKey: 'enthalpyOKForEconomizer' }),
-      React.createElement(EditableRow, { label: 'Minimum Position', stateKey: 'economizerMinPosition', units: '%', min: 0, max: 100 }),
-      React.createElement(EditableRow, { label: 'Min. Position Fan Speed Lock', stateKey: 'minPositionFanSpeedLock', units: '%', min: 0, max: 50 }),
-      React.createElement(EditableRow, { label: 'Economizer Temp Control SP', stateKey: 'economizerTempControlSP', units: '°F', min: 40, max: 75, step: 0.5 }),
+      React.createElement(ReadOnlyRow, { label: 'OA Enthalpy (Live)', stateKey: 'oaEnthalpy', units: 'BTU' }),
+      React.createElement(ToggleRow, { label: 'Enthalpy OK — Economizer', stateKey: 'enthalpyOKForEconomizer' }),
+      React.createElement(EditableRow, { label: 'OA Min Position (Damper)', stateKey: 'economizerMinPosition', units: '%', min: 0, max: 100 }),
+      React.createElement(EditableRow, { label: 'Min Fan Speed Lockout', stateKey: 'minPositionFanSpeedLock', units: '%', min: 0, max: 50 }),
+      React.createElement(EditableRow, { label: 'Economizer Mixed Air Target', stateKey: 'economizerTempControlSP', units: '°F', min: 40, max: 75, step: 0.5 }),
 
       // OUTSIDE AIR DAMPER CONTROL
       React.createElement(SectionHeader, { title: 'Outside Air Damper Control' }),
       React.createElement(EditableRow, { label: 'Controlling CO₂ Sensor', stateKey: 'co2Sensor', units: 'PPM', min: 300, max: 5000 }),
-      React.createElement(EditableRow, { label: 'CO₂ Setpoint', stateKey: 'co2Setpoint', units: 'PPM', min: 400, max: 2000 }),
-      React.createElement(EditableRow, { label: 'Min OA Airflow Active SP', stateKey: 'minOAAirflowSetpoint', units: 'CFM', min: 0, max: 12000 }),
+      React.createElement(EditableRow, { label: 'CO₂ Fresh Air Monitor SP', stateKey: 'co2Setpoint', units: 'PPM', min: 400, max: 2000 }),
+      React.createElement(EditableRow, { label: 'Min OA Airflow Setpoint', stateKey: 'minOAAirflowSetpoint', units: 'CFM', min: 0, max: 12000 }),
 
       // FAN TRACKING
       React.createElement(SectionHeader, { title: 'Fan Tracking' }),
@@ -233,7 +233,7 @@ const AHU46ControlsSidebar = (() => {
       React.createElement(ReadOnlyRow, { label: 'Return Fan Track Mode', stateKey: 'fanTrackMode', units: '' }),
 
       // CALCULATED OUTPUTS — OA Damper Position is Manual-able (same as AHU-4-4)
-      React.createElement(SectionHeader, { title: 'Calculated Outputs' }),
+      React.createElement(SectionHeader, { title: 'Calculated Outputs  ·  Read-Only' }),
       React.createElement(ReadOnlyRow, { label: 'Fan Status', stateKey: 'fanRunning', units: '',
         format: function(v) { return v ? '● RUNNING' : '○ STOPPED'; } }),
       React.createElement(ReadOnlyRow, { label: 'Supply CFM', stateKey: 'cfm', units: 'CFM',

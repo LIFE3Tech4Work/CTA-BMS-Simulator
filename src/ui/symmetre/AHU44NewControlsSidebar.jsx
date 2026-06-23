@@ -193,6 +193,18 @@ const AHU44NewControlsSidebar = (() => {
         }, '◀')
       ),
 
+      // LEGEND
+      React.createElement('div', { className: 'px-2 py-1 bg-gray-100 border-b border-gray-300 flex gap-3 flex-wrap' },
+        React.createElement('span', { className: 'text-[9px] text-gray-500' },
+          React.createElement('span', { className: 'inline-block w-2 h-2 rounded-sm border border-blue-400 bg-white mr-1' }),
+          'White box = editable setpoint'
+        ),
+        React.createElement('span', { className: 'text-[9px] text-gray-500' },
+          React.createElement('span', { className: 'inline-block w-2 h-2 rounded-sm bg-gray-200 mr-1' }),
+          'Gray = calculated / read-only'
+        )
+      ),
+
       // SCHEDULE
       React.createElement(SectionHeader, { title: 'Schedule' }),
       React.createElement(ToggleRow, { label: 'Run Schedule', stateKey: 'runSchedule' }),
@@ -204,7 +216,7 @@ const AHU44NewControlsSidebar = (() => {
       React.createElement(ReadOnlyRow, { label: 'Starting Time Left', stateKey: 'startingTimeLeft', units: 'SEC' }),
 
       // SUPPLY AIR TEMPERATURE CONTROL
-      React.createElement(SectionHeader, { title: 'Supply Air Temp Control' }),
+      React.createElement(SectionHeader, { title: 'Supply Air Temp Control  ·  Setpoints' }),
       React.createElement(EditableRow, { label: 'Cooling Coil Active SP', stateKey: 'coolingCoilSetpoint', units: '°F', min: 45, max: 75, step: 0.5 }),
       React.createElement(EditableRow, { label: 'Heating Coil Active SP', stateKey: 'heatingCoilSetpoint', units: '°F', min: 40, max: 70, step: 0.5 }),
 
@@ -213,30 +225,36 @@ const AHU44NewControlsSidebar = (() => {
       React.createElement(EditableRow, { label: 'Active Minimum Setpoint', stateKey: 'plenumMinSetpoint', units: '°F', min: 30, max: 55, step: 0.5 }),
 
       // ECONOMIZER CONTROL
-      React.createElement(SectionHeader, { title: 'Economizer Control' }),
-      React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Temp', stateKey: 'oaTemperature', units: '°F', format: function(v) { return (typeof v === 'number' ? v.toFixed(1) : '--') + ' (live)'; } }),
+      React.createElement(SectionHeader, { title: 'Economizer Control  ·  Setpoints' }),
+      React.createElement(ReadOnlyRow, { label: 'OA Temp (Live)', stateKey: 'oaTemperature', units: '°F', format: function(v) { return (typeof v === 'number' ? v.toFixed(1) : '--') + ' (live)'; } }),
       React.createElement(ToggleRow, { label: 'Low OA Temp Lockout', stateKey: 'lowOATLockout' }),
-      React.createElement(ReadOnlyRow, { label: 'Unit Outside Air Enthalpy', stateKey: 'oaEnthalpy', units: 'BTU' }),
-      React.createElement(ToggleRow, { label: 'Enthalpy OK For Economizer', stateKey: 'enthalpyOKForEconomizer' }),
-      React.createElement(EditableRow, { label: 'Minimum Position', stateKey: 'economizerMinPosition', units: '%', min: 0, max: 100 }),
-      React.createElement(EditableRow, { label: 'Min. Position Fan Speed Lock', stateKey: 'minPositionFanSpeedLock', units: '%', min: 0, max: 50 }),
-      React.createElement(EditableRow, { label: 'Economizer Temp Control SP', stateKey: 'economizerTempControlSP', units: '°F', min: 40, max: 75, step: 0.5 }),
+      React.createElement(ReadOnlyRow, { label: 'OA Enthalpy (Live)', stateKey: 'oaEnthalpy', units: 'BTU' }),
+      React.createElement(ToggleRow, { label: 'Enthalpy OK — Economizer (auto)',
+        stateKey: 'enthalpyOKForEconomizer',
+        tooltip: 'SOO CLC #2: Auto-calculated. Enable when OA enthalpy < return enthalpy − 5 BTU/lb AND OA > 38°F. Override with M badge for manual testing.' }),
+      React.createElement(EditableRow, { label: 'OA Min Position (Damper)', stateKey: 'economizerMinPosition', units: '%', min: 0, max: 100 }),
+      React.createElement(EditableRow, { label: 'Min Fan Speed Lockout', stateKey: 'minPositionFanSpeedLock', units: '%', min: 0, max: 50 }),
+      React.createElement(EditableRow, { label: 'Economizer Mixed Air Target', stateKey: 'economizerTempControlSP', units: '°F', min: 40, max: 75, step: 0.5 }),
 
       // OUTSIDE AIR DAMPER CONTROL
       React.createElement(SectionHeader, { title: 'Outside Air Damper Control' }),
       React.createElement(EditableRow, { label: 'Controlling CO₂ Sensor', stateKey: 'co2Sensor', units: 'PPM', min: 300, max: 5000 }),
-      React.createElement(EditableRow, { label: 'CO₂ Setpoint', stateKey: 'co2Setpoint', units: 'PPM', min: 400, max: 2000 }),
-      React.createElement(EditableRow, { label: 'Min OA Airflow Active SP', stateKey: 'minOAAirflowSetpoint', units: 'CFM', min: 0, max: 16500 }),
+      React.createElement(EditableRow, {
+        label: 'CO₂ Fresh Air Monitor SP',
+        stateKey: 'co2Setpoint', units: 'PPM', min: 400, max: 2000,
+        tooltip: 'SOO CLC #7: 900 PPM = OA delivery check. If CO₂ rises above this, more OA is demanded. DCV override threshold = 1100 PPM.'
+      }),
+      React.createElement(EditableRow, { label: 'Min OA Airflow Setpoint', stateKey: 'minOAAirflowSetpoint', units: 'CFM', min: 0, max: 16500 }),
 
       // FAN TRACKING
-      React.createElement(SectionHeader, { title: 'Fan Tracking' }),
+      React.createElement(SectionHeader, { title: 'Fan Tracking  ·  Setpoints' }),
       React.createElement(EditableRow, { label: 'Fan Speed Setpoint', stateKey: 'fanSpeedSetpoint', units: '%', min: 0, max: 100 }),
       React.createElement(ReadOnlyRow, { label: 'Return Fan Track Mode', stateKey: 'fanTrackMode', units: '' }),
 
       // CALCULATED OUTPUTS (mostly read-only — OA Damper Position can be
       // manually overridden, same as a real BACnet AO going Manual; see
       // the Manual-output note in AHU44NewController.js's file header)
-      React.createElement(SectionHeader, { title: 'Calculated Outputs' }),
+      React.createElement(SectionHeader, { title: 'Calculated Outputs  ·  Read-Only' }),
       React.createElement(ReadOnlyRow, { label: 'Fan Status', stateKey: 'fanRunning', units: '',
         format: function(v) { return v ? '● RUNNING' : '○ STOPPED'; } }),
       React.createElement(ReadOnlyRow, { label: 'Supply CFM', stateKey: 'cfm', units: 'CFM',
@@ -244,6 +262,15 @@ const AHU44NewControlsSidebar = (() => {
       React.createElement(ReadOnlyRow, { label: 'OA CFM', stateKey: 'oaCFM', units: 'CFM',
         format: function(v) { return Math.round(v).toLocaleString(); } }),
       React.createElement(EditableRow, { label: 'OA Damper Position', stateKey: 'oaDamperPosition', units: '%', min: 0, max: 100 }),
+      React.createElement(ReadOnlyRow, { label: 'Return Air Damper', stateKey: 'returnAirDamperPct', units: '%',
+        format: function(v) { return Math.round(v) + '% (inverse of OA)'; } }),
+      React.createElement(ReadOnlyRow, { label: 'Spill Damper (DA-3, N.O.)', stateKey: 'spillDamperPct', units: '%',
+        format: function(v) { return Math.round(v) + '% (N.O.=100% when off)'; } }),
+      React.createElement(ReadOnlyRow, { label: 'Exhaust Damper', stateKey: 'exhaustDamperPct', units: '%' }),
+      React.createElement(ReadOnlyRow, { label: 'Return Fan CFM (90% of SF)', stateKey: 'returnCFM', units: 'CFM',
+        format: function(v) { return Math.round(v).toLocaleString(); } }),
+      React.createElement(ReadOnlyRow, { label: 'Supply Air %RH', stateKey: 'supplyRH', units: '%',
+        format: function(v) { return Math.round(v) + '% (responds to CHW valve)'; } }),
       React.createElement(ReadOnlyRow, { label: 'Economizer Active', stateKey: 'economizerActive', units: '',
         format: function(v) { return v ? 'YES' : 'NO'; } }),
       React.createElement(ReadOnlyRow, { label: 'CHW Valve', stateKey: 'chwValvePosition', units: '%' }),
