@@ -59,7 +59,9 @@ const SymmetreAppChrome = (function() {
         { label: 'Speed: 3600×', action: function() { if (window.SimulationEngine) window.SimulationEngine.setSpeed('3600x'); } },
       ],
       'Help': [
-        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v1.0\nHoneywell SymmetrE / EBI Training Platform\nCTA Training Building — NYC Downtown\n\nProperty Primary Use: Multifamily Home\nProperty Secondary Use: Hotel'); } },
+        { label: 'About CTA BMS Simulator', action: function() { alert('CTA BMS Simulator v2.4\nHoneywell SymmetrE / EBI Training Platform\nCTA Training Building — NYC Downtown\n\nProperty Primary Use: Multifamily Home\nProperty Secondary Use: Hotel'); } },
+        { label: null, action: null },
+        { label: 'SME QA: Log Observation', action: function() { if (window.SMEQAForm) window.SMEQAForm.open(); } },
       ],
     };
 
@@ -121,6 +123,12 @@ const SymmetreAppChrome = (function() {
             className: 'absolute top-full left-0 z-50 bg-gray-800 border border-gray-600 rounded shadow-lg min-w-[180px] py-1'
           },
             dropdownItems.map(function(opt, idx) {
+              if (!opt.action) {
+                return React.createElement('div', {
+                  key: idx,
+                  className: 'border-t border-gray-600 my-1',
+                });
+              }
               return React.createElement('button', {
                 key: idx,
                 className: 'block w-full text-left px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-600 hover:text-white transition-colors',
